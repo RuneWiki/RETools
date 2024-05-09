@@ -1,0 +1,12 @@
+rootProject.name = 'RETools'
+
+dependencyResolutionManagement {
+    repositories {
+        mavenCentral()
+        maven { url 'https://www.jetbrains.com/intellij-repository/releases' }
+    }
+}
+
+include(
+    "deobfuscator"
+)
