@@ -1,4 +1,4 @@
-package org.runewiki.retools;
+package org.runewiki.decompiler;
 
 import org.jetbrains.java.decompiler.main.Fernflower;
 import org.jetbrains.java.decompiler.main.decompiler.PrintStreamLogger;
@@ -15,12 +15,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Manifest;
 
-public class Decompile implements IBytecodeProvider, IResultSaver {
+public class Decompiler implements IBytecodeProvider, IResultSaver {
 
     private final Fernflower engine;
     private HashMap<String, byte[]> classes = new HashMap<>();
 
-    public Decompile(List<ClassNode> classNodes) {
+    public Decompiler(List<ClassNode> classNodes) {
         this.engine = new Fernflower(this, this, null, new PrintStreamLogger(System.out));
 
         for (ClassNode node : classNodes) {
@@ -32,6 +32,8 @@ public class Decompile implements IBytecodeProvider, IResultSaver {
     }
 
     public void run() {
+        System.out.println("---- Decompiling ----");
+
         try {
             this.engine.decompileContext();
         } finally {

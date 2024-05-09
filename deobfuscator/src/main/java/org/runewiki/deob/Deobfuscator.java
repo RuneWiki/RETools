@@ -1,9 +1,13 @@
-package org.runewiki.retools;
+package org.runewiki.deob;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
+import org.runewiki.asm.transform.Transformer;
+import org.runewiki.decompiler.Decompiler;
+import org.runewiki.deob.bytecode.transform.ClassOrderTransformer;
+import org.runewiki.deob.bytecode.transform.OriginalNameTransformer;
+import org.runewiki.deob.bytecode.transform.RedundantExceptionTransformer;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -13,7 +17,7 @@ import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class Deobfuscate {
+public class Deobfuscator {
     public static void main(String[] args) {
         try {
             if (args.length != 1) {
@@ -21,10 +25,20 @@ public class Deobfuscate {
                 return;
             }
 
-            List<ClassNode> classes = Deobfuscate.loadJar(Paths.get(args[0] ));
+            List<ClassNode> classes = Deobfuscator.loadJar(Paths.get(args[0] ));
             System.out.println("Loaded " + classes.size() + " classes");
 
-            Decompile decompiler = new Decompile(classes);
+            List<Transformer> transformers = new ArrayList<>();
+            transformers.add(new OriginalNameTransformer());
+            transformers.add(new ClassOrderTransformer());
+            transformers.add(new RedundantExceptionTransformer());
+
+            for (Transformer transformer : transformers) {
+                System.out.println("Applying transformer " + transformer.getName());
+                transformer.transform(classes);
+            }
+
+            Decompiler decompiler = new Decompiler(classes);
             decompiler.run();
         } catch (Exception ex) {
             ex.printStackTrace();
