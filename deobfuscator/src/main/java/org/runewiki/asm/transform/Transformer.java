@@ -4,6 +4,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.runewiki.asm.AsmUtil;
 
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class Transformer {
                 for (MethodNode method : clazz.methods) {
                     changed |= this.preTransformMethod(classes, clazz, method);
 
-                    if ((method.access & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT)) == 0) {
+                    if (AsmUtil.hasCode(method)) {
                         changed |= this.transformCode(classes, clazz, method);
                     }
 

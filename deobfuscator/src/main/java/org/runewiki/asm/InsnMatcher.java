@@ -1,12 +1,15 @@
 package org.runewiki.asm;
 
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.InsnList;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -48,6 +51,12 @@ public class InsnMatcher {
         return (char) (opcode + InsnMatcher.PRIVATE_USE_AREA);
     }
 
+    private static final Map<String, int[]> OPCODE_GROUPS = new HashMap<String, int[]>() {
+        {
+            put("ICONST", new int[] { Opcodes.ICONST_M1, Opcodes.ICONST_0, Opcodes.ICONST_1, Opcodes.ICONST_2, Opcodes.ICONST_3, Opcodes.ICONST_4, Opcodes.ICONST_5 });
+        }
+    };
+
     private static void appendOpcodeRegex(StringBuilder pattern, String opcode) {
         for (int i = 0; i < Printer.OPCODES.length; i++) {
             if (Printer.OPCODES[i].equals(opcode)) {
@@ -56,7 +65,18 @@ public class InsnMatcher {
             }
         }
 
-        // todo: OPCODE_GROUPS logic
+        int[] group = OPCODE_GROUPS.get(opcode);
+        if (group != null) {
+            pattern.append('(');
+            for (int i = 0; i < group.length; i++) {
+                pattern.append(opcodeToCodepoint(group[i]));
+                if (i < group.length - 1) {
+                    pattern.append('|');
+                }
+            }
+            pattern.append(')');
+            return;
+        }
 
         if (opcode.equals("AbstractInsnNode")) {
             pattern.append('.');

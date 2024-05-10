@@ -4,9 +4,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.asm.transform.Transformer;
 import org.runewiki.decompiler.Decompiler;
-import org.runewiki.deob.bytecode.transform.ClassOrderTransformer;
-import org.runewiki.deob.bytecode.transform.OriginalNameTransformer;
-import org.runewiki.deob.bytecode.transform.ExceptionTracingTransformer;
+import org.runewiki.deob.bytecode.transform.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -30,17 +28,25 @@ public class Deobfuscator {
             System.out.println("---- Deobfuscating ----");
 
             List<Transformer> transformers = new ArrayList<>();
+
+            // pre-remap
             transformers.add(new OriginalNameTransformer());
             transformers.add(new ClassOrderTransformer());
+            transformers.add(new RedundantGotoTransformer());
+
+            // remap
+
+            // post-remap
             transformers.add(new ExceptionTracingTransformer());
+            transformers.add(new RedundantGotoTransformer());
 
             for (Transformer transformer : transformers) {
-                System.out.println("Applying transformer " + transformer.getName());
+                System.out.println("Applying " + transformer.getName() + " transformer");
                 transformer.transform(classes);
             }
 
-            Decompiler decompiler = new Decompiler(classes);
-            decompiler.run();
+           Decompiler decompiler = new Decompiler(classes);
+           decompiler.run();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
