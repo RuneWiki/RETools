@@ -6,7 +6,7 @@ import org.runewiki.asm.transform.Transformer;
 import org.runewiki.decompiler.Decompiler;
 import org.runewiki.deob.bytecode.transform.ClassOrderTransformer;
 import org.runewiki.deob.bytecode.transform.OriginalNameTransformer;
-import org.runewiki.deob.bytecode.transform.RedundantExceptionTransformer;
+import org.runewiki.deob.bytecode.transform.ExceptionTracingTransformer;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -27,11 +27,12 @@ public class Deobfuscator {
 
             List<ClassNode> classes = Deobfuscator.loadJar(Paths.get(args[0] ));
             System.out.println("Loaded " + classes.size() + " classes");
+            System.out.println("---- Deobfuscating ----");
 
             List<Transformer> transformers = new ArrayList<>();
             transformers.add(new OriginalNameTransformer());
             transformers.add(new ClassOrderTransformer());
-            transformers.add(new RedundantExceptionTransformer());
+            transformers.add(new ExceptionTracingTransformer());
 
             for (Transformer transformer : transformers) {
                 System.out.println("Applying transformer " + transformer.getName());
@@ -60,7 +61,7 @@ public class Deobfuscator {
                 if (entry.getName().endsWith(".class")) {
                     ClassReader reader = new ClassReader(zip);
                     ClassNode node = new ClassNode();
-                    reader.accept(node, ClassReader.SKIP_FRAMES);
+                    reader.accept(node, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                     classes.add(node);
                 }
              }
