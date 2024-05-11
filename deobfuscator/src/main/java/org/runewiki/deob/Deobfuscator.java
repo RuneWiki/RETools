@@ -48,6 +48,7 @@ public class Deobfuscator {
             registerTransformer(new OpaquePredicateTransformer());
             registerTransformer(new OriginalNameTransformer());
             registerTransformer(new RedundantGotoTransformer());
+            registerTransformer(new VisibilityTransformer());
 
             System.out.println("Input: " + input);
             System.out.println("Output: " + output);

@@ -12,6 +12,7 @@ output_dir = "dump/out"
 # OpaquePredicate: Remove opaque predicates
 # OriginalName: Add OpenRS2's OriginalClass and OriginalMember annotations to classes, fields, and methods
 # RedundantGoto: Remove redundant GOTO instructions
+# VisibilityTransformer: Default undeclared class, field, and method visibility to public
 
 # pre-remap transformers
 pre_transformers = [
@@ -25,7 +26,8 @@ transformers = [
     "OpaquePredicate",
     "ExceptionTracing",
     "Monitor",
-    "RedundantGoto"
+    "RedundantGoto",
+    "Visibility"
 ]
 
 decompile = true
