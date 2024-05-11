@@ -67,6 +67,10 @@ public class OriginalNameTransformer extends Transformer {
 
     @Override
     public boolean preTransformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+        if (method.name.equals("<clinit>")) {
+            return false;
+        }
+
         AnnotationVisitor annotation = method.visitAnnotation("Lorg.openrs2.deob.annotation.OriginalMember;", false);
         annotation.visit("owner", libraryAnnotation + "!" + clazz.name);
         annotation.visit("name", method.name);
