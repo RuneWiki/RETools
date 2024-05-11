@@ -149,7 +149,7 @@ public class RemapTransformer extends Transformer {
                 }
             } else if (insn instanceof MultiANewArrayInsnNode) {
                 MultiANewArrayInsnNode multiANewArrayInsn = (MultiANewArrayInsnNode) insn;
-                multiANewArrayInsn.desc = remapper.map(multiANewArrayInsn.desc);
+                multiANewArrayInsn.desc = remapper.mapType(multiANewArrayInsn.desc);
             } else if (insn instanceof InvokeDynamicInsnNode) {
                 InvokeDynamicInsnNode invokeDynamicInsn = (InvokeDynamicInsnNode) insn;
                 invokeDynamicInsn.desc = remapper.mapMethodDesc(invokeDynamicInsn.desc);
