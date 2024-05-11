@@ -5,7 +5,9 @@ import org.runewiki.asm.transform.Transformer;
 
 import java.util.List;
 
-// used for rs2 revs 185-303
+/*
+ * Reorder classes based on old rs2 revisions 185-303
+ */
 public class ClassOrderTransformer extends Transformer {
     @Override
     public boolean prePass(List<ClassNode> classes) {

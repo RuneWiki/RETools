@@ -7,6 +7,9 @@ import org.tomlj.TomlParseResult;
 
 import java.util.List;
 
+/*
+ * Add OpenRS2's OriginalClass and OriginalMember annotations to classes, fields, and methods
+ */
 public class OriginalNameTransformer extends Transformer {
     private String libraryAnnotation;
 

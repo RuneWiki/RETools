@@ -9,6 +9,7 @@ import org.tomlj.Toml;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
 
+import javax.management.monitor.Monitor;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,6 +44,8 @@ public class Deobfuscator {
 
             registerTransformer(new ClassOrderTransformer());
             registerTransformer(new ExceptionTracingTransformer());
+            registerTransformer(new MonitorTransformer());
+            registerTransformer(new OpaquePredicateTransformer());
             registerTransformer(new OriginalNameTransformer());
             registerTransformer(new RedundantGotoTransformer());
 
@@ -68,8 +71,7 @@ public class Deobfuscator {
                 }
             }
 
-            // todo: remap
-            System.out.println("Remapping");
+            new RemapTransformer().transform(classes);
 
             TomlArray transformers = toml.getArray("profile.transformers");
             if (transformers != null) {
