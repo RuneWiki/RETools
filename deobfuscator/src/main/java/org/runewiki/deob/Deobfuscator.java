@@ -21,39 +21,39 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Deobfuscator {
+    private static TomlParseResult toml;
     private static Map<String, Transformer> allTransformers = new HashMap<>();
-
-    static {
-        registerTransformer(new ClassOrderTransformer());
-        registerTransformer(new ExceptionTracingTransformer());
-        registerTransformer(new OriginalNameTransformer());
-        registerTransformer(new RedundantGotoTransformer());
-    }
 
     public static void registerTransformer(Transformer transformer) {
         //System.out.println("Registered transformer: " + transformer.getName());
         allTransformers.put(transformer.getName(), transformer);
+        transformer.provide(toml);
     }
 
     public static void main(String[] args) {
         try {
-            TomlParseResult result = Toml.parse(Paths.get("deob.toml"));
-            String input = result.getString("file.input");
-            String output = result.getString("file.output");
+            toml = Toml.parse(Paths.get("deob.toml"));
 
+            String input = toml.getString("file.input");
+            String output = toml.getString("file.output");
             if (input == null || output == null) {
                 System.err.println("deob.toml is invalid, see example file");
                 System.exit(1);
             }
 
+            registerTransformer(new ClassOrderTransformer());
+            registerTransformer(new ExceptionTracingTransformer());
+            registerTransformer(new OriginalNameTransformer());
+            registerTransformer(new RedundantGotoTransformer());
+
             System.out.println("Input: " + input);
             System.out.println("Output: " + output);
 
-            List<ClassNode> classes = Deobfuscator.loadJar(Paths.get(input));
+            List<ClassNode> classes = loadJar(Paths.get(input));
             System.out.println("Loaded " + classes.size() + " classes");
             System.out.println("---- Deobfuscating ----");
 
-            TomlArray preTransformers = result.getArray("profile.pre_transformers");
+            TomlArray preTransformers = toml.getArray("profile.pre_transformers");
             if (preTransformers != null) {
                 for (int i = 0; i < preTransformers.size(); i++) {
                     String name = preTransformers.getString(i);
@@ -71,7 +71,7 @@ public class Deobfuscator {
             // todo: remap
             System.out.println("Remapping");
 
-            TomlArray transformers = result.getArray("profile.transformers");
+            TomlArray transformers = toml.getArray("profile.transformers");
             if (transformers != null) {
                 for (int i = 0; i < transformers.size(); i++) {
                     String name = transformers.getString(i);

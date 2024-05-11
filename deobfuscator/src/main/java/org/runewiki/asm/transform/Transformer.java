@@ -5,10 +5,17 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.runewiki.asm.AsmUtil;
+import org.tomlj.TomlParseResult;
 
 import java.util.List;
 
 public class Transformer {
+    protected TomlParseResult toml;
+
+    public void provide(TomlParseResult toml) {
+        this.toml = toml;
+    }
+
     public String getName() {
         return this.getClass().getSimpleName().replace("Transformer", "");
     }

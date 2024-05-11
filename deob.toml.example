@@ -18,3 +18,9 @@ transformers = [
     "ExceptionTracing",
     "RedundantGoto"
 ]
+
+[profile.original_name]
+# we produce openrs2-compatible deob annotations but since we don't have a library system
+# we require the profile here to include the openrs2 library annotation. this gets prefixed
+# to the class name i.e. "client!" and "loader!"
+library_annotation = "client"
