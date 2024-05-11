@@ -13,12 +13,28 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Deobfuscator {
+    private static Map<String, Transformer> allTransformers = new HashMap<>();
+
+    static {
+        registerTransformer(new ClassOrderTransformer());
+        registerTransformer(new ExceptionTracingTransformer());
+        registerTransformer(new OriginalNameTransformer());
+        registerTransformer(new RedundantGotoTransformer());
+    }
+
+    public static void registerTransformer(Transformer transformer) {
+        //System.out.println("Registered transformer: " + transformer.getName());
+        allTransformers.put(transformer.getName(), transformer);
+    }
+
     public static void main(String[] args) {
         try {
             TomlParseResult result = Toml.parse(Paths.get("deob.toml"));
@@ -40,26 +56,33 @@ public class Deobfuscator {
             TomlArray preTransformers = result.getArray("profile.pre_transformers");
             if (preTransformers != null) {
                 for (int i = 0; i < preTransformers.size(); i++) {
-                    String transformer = preTransformers.getString(i);
-                    System.out.println("Applying " + transformer + " transformer");
+                    String name = preTransformers.getString(i);
 
-                    Class<?> clazz = Class.forName("org.runewiki.deob.bytecode.transform." + transformer + "Transformer");
-                    Transformer instance = (Transformer) clazz.newInstance();
-                    instance.transform(classes);
+                    Transformer transformer = allTransformers.get(name);
+                    if (transformer != null) {
+                        System.out.println("Applying " + name + " pre-transformer");
+                        transformer.transform(classes);
+                    } else {
+                        System.err.println("Unknown transformer: " + name);
+                    }
                 }
             }
 
             // todo: remap
+            System.out.println("Remapping");
 
             TomlArray transformers = result.getArray("profile.transformers");
             if (transformers != null) {
                 for (int i = 0; i < transformers.size(); i++) {
-                    String transformer = transformers.getString(i);
-                    System.out.println("Applying " + transformer + " transformer");
+                    String name = transformers.getString(i);
 
-                    Class<?> clazz = Class.forName("org.runewiki.deob.bytecode.transform." + transformer + "Transformer");
-                    Transformer instance = (Transformer) clazz.newInstance();
-                    instance.transform(classes);
+                    Transformer transformer = allTransformers.get(name);
+                    if (transformer != null) {
+                        System.out.println("Applying " + name + " transformer");
+                        transformer.transform(classes);
+                    } else {
+                        System.err.println("Unknown transformer: " + name);
+                    }
                 }
             }
 
