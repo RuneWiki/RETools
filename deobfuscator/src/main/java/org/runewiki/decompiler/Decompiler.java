@@ -10,10 +10,13 @@ import org.objectweb.asm.tree.ClassNode;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 public class Decompiler implements IBytecodeProvider, IResultSaver {
 
@@ -30,6 +33,26 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
             node.accept(writer);
             classes.put(node.name, writer.toByteArray());
             engine.addSource(new File(node.name + ".class"));
+        }
+
+        try {
+            if (Files.exists(Paths.get(output))) {
+                // https://stackoverflow.com/a/42267494
+                try (Stream<Path> dirStream = Files.walk(Paths.get(output))) {
+                    dirStream
+                        .map(Path::toFile)
+                        .sorted(Comparator.reverseOrder())
+                        .forEach(File::delete);
+                }
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        try {
+            Files.createDirectories(Paths.get(output));
+        } catch (IOException ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -61,7 +84,6 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
     @Override
     public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
         try {
-            Files.createDirectories(Paths.get(output));
             if (qualifiedName.contains("/")) {
                 String[] dirs = qualifiedName.split("/");
                 String dir = "";
