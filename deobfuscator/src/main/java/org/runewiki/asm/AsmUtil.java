@@ -13,6 +13,14 @@ public class AsmUtil {
         return next;
     }
 
+    public static AbstractInsnNode getPreviousReal(AbstractInsnNode insn) {
+        AbstractInsnNode previous = insn.getPrevious();
+        while (previous != null && (previous.getOpcode() == -1 || previous.getOpcode() == 0)) {
+            previous = previous.getPrevious();
+        }
+        return previous;
+    }
+
     public static boolean hasCode(MethodNode method) {
         return (method.access & (Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT)) == 0;
     }
