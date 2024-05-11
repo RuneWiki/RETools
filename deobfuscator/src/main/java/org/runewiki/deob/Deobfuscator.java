@@ -88,8 +88,10 @@ public class Deobfuscator {
                 }
             }
 
-           Decompiler decompiler = new Decompiler(output, classes);
-           decompiler.run();
+            if (Boolean.TRUE.equals(toml.getBoolean("profile.decompile"))) {
+                Decompiler decompiler = new Decompiler(output, classes);
+                decompiler.run();
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }

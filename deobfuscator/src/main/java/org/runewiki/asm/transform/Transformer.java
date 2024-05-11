@@ -1,6 +1,5 @@
 package org.runewiki.asm.transform;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -28,7 +27,7 @@ public class Transformer {
             changed = this.prePass(classes);
 
             for (ClassNode clazz : classes) {
-                changed |= this.transformClass(classes, clazz);
+                changed |= this.preTransformClass(classes, clazz);
 
                 for (FieldNode field : clazz.fields) {
                     changed |= this.transformField(classes, clazz, field);
@@ -43,6 +42,8 @@ public class Transformer {
 
                     changed |= this.postTransformMethod(classes, clazz, method);
                 }
+
+                changed |= this.postTransformClass(classes, clazz);
             }
 
             changed |= this.postPass(classes);
@@ -58,7 +59,7 @@ public class Transformer {
         return false;
     }
 
-    public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
+    public boolean preTransformClass(List<ClassNode> classes, ClassNode clazz) {
         return false;
     }
 
@@ -75,6 +76,10 @@ public class Transformer {
     }
 
     public boolean postTransformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+        return false;
+    }
+
+    public boolean postTransformClass(List<ClassNode> classes, ClassNode clazz) {
         return false;
     }
 

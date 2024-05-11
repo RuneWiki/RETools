@@ -25,7 +25,7 @@ public class OriginalNameTransformer extends Transformer {
     }
 
     @Override
-    public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
+    public boolean preTransformClass(List<ClassNode> classes, ClassNode clazz) {
         AnnotationVisitor annotation = clazz.visitAnnotation("Lorg.openrs2.deob.annotation.OriginalClass;", false);
         annotation.visit("value", libraryAnnotation + "!" + clazz.name);
         annotation.visitEnd();
