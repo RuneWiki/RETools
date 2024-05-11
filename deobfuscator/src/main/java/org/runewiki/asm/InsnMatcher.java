@@ -20,6 +20,10 @@ public class InsnMatcher {
         this.pattern = pattern;
     }
 
+    public String getPattern() {
+        return this.pattern.pattern();
+    }
+
     public List<List<AbstractInsnNode>> match(MethodNode method) {
         return this.match(method.instructions);
     }
