@@ -35,8 +35,8 @@ public class Deobfuscator {
         try {
             toml = Toml.parse(Paths.get("deob.toml"));
 
-            String input = toml.getString("file.input");
-            String output = toml.getString("file.output");
+            String input = toml.getString("profile.input_jar");
+            String output = toml.getString("profile.output_dir");
             if (input == null || output == null) {
                 System.err.println("deob.toml is invalid, see example file");
                 System.exit(1);
@@ -71,7 +71,9 @@ public class Deobfuscator {
                 }
             }
 
-            new RemapTransformer().transform(classes);
+            Transformer remap = new RemapTransformer();
+            remap.provide(toml);
+            remap.transform(classes);
 
             TomlArray transformers = toml.getArray("profile.transformers");
             if (transformers != null) {
