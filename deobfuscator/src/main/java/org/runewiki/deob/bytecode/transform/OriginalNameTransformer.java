@@ -1,7 +1,9 @@
 package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.*;
+import org.openrs2.deob.annotation.OriginalClass;
 import org.runewiki.asm.transform.Transformer;
 import org.tomlj.TomlParseResult;
 
@@ -21,6 +23,27 @@ public class OriginalNameTransformer extends Transformer {
         if (libraryAnnotation == null) {
             // a sane default considering the context
             libraryAnnotation = "client";
+        }
+    }
+
+    @Override
+    public void postTransform(List<ClassNode> classes) {
+        try {
+            {
+                ClassReader reader = new ClassReader("org.openrs2.deob.annotation.OriginalClass");
+                ClassNode clazz = new ClassNode();
+                reader.accept(clazz, 0);
+                classes.add(clazz);
+            }
+
+            {
+                ClassReader reader = new ClassReader("org.openrs2.deob.annotation.OriginalMember");
+                ClassNode clazz = new ClassNode();
+                reader.accept(clazz, 0);
+                classes.add(clazz);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
