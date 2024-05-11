@@ -6,6 +6,7 @@ import org.runewiki.asm.transform.Transformer;
 import org.runewiki.decompiler.Decompiler;
 import org.runewiki.deob.bytecode.transform.*;
 import org.tomlj.Toml;
+import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
 
 import java.io.IOException;
@@ -21,33 +22,45 @@ public class Deobfuscator {
     public static void main(String[] args) {
         try {
             TomlParseResult result = Toml.parse(Paths.get("deob.toml"));
-            String input = result.getString("input");
-            String output = result.getString("output");
+            String input = result.getString("file.input");
+            String output = result.getString("file.output");
 
             if (input == null || output == null) {
-                throw new RuntimeException("input and output must be specified in deob.toml");
+                System.err.println("deob.toml is invalid, see example file");
+                System.exit(1);
             }
+
+            System.out.println("Input: " + input);
+            System.out.println("Output: " + output);
 
             List<ClassNode> classes = Deobfuscator.loadJar(Paths.get(input));
             System.out.println("Loaded " + classes.size() + " classes");
             System.out.println("---- Deobfuscating ----");
 
-            List<Transformer> transformers = new ArrayList<>();
+            TomlArray preTransformers = result.getArray("profile.pre_transformers");
+            if (preTransformers != null) {
+                for (int i = 0; i < preTransformers.size(); i++) {
+                    String transformer = preTransformers.getString(i);
+                    System.out.println("Applying " + transformer + " transformer");
 
-            // pre-remap
-            transformers.add(new OriginalNameTransformer());
-            transformers.add(new ClassOrderTransformer());
-            transformers.add(new RedundantGotoTransformer());
+                    Class<?> clazz = Class.forName("org.runewiki.deob.bytecode.transform." + transformer + "Transformer");
+                    Transformer instance = (Transformer) clazz.newInstance();
+                    instance.transform(classes);
+                }
+            }
 
-            // remap
+            // todo: remap
 
-            // post-remap
-            transformers.add(new ExceptionTracingTransformer());
-            transformers.add(new RedundantGotoTransformer());
+            TomlArray transformers = result.getArray("profile.transformers");
+            if (transformers != null) {
+                for (int i = 0; i < transformers.size(); i++) {
+                    String transformer = transformers.getString(i);
+                    System.out.println("Applying " + transformer + " transformer");
 
-            for (Transformer transformer : transformers) {
-                System.out.println("Applying " + transformer.getName() + " transformer");
-                transformer.transform(classes);
+                    Class<?> clazz = Class.forName("org.runewiki.deob.bytecode.transform." + transformer + "Transformer");
+                    Transformer instance = (Transformer) clazz.newInstance();
+                    instance.transform(classes);
+                }
             }
 
            Decompiler decompiler = new Decompiler(output, classes);

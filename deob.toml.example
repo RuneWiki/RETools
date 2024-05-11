@@ -1,2 +1,20 @@
+[file]
+# input file to deobfuscate and decompile
 input = "dump/runescape.jar"
+
+# output directory for decompiled .java files
 output = "dump/out"
+
+[profile]
+# pre-remap transformers
+pre_transformers = [
+    "OriginalName",
+    "ClassOrder",
+    "RedundantGoto"
+]
+
+# post-remap transformers
+transformers = [
+    "ExceptionTracing",
+    "RedundantGoto"
+]
