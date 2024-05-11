@@ -5,6 +5,8 @@ import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.asm.transform.Transformer;
 import org.runewiki.decompiler.Decompiler;
 import org.runewiki.deob.bytecode.transform.*;
+import org.tomlj.Toml;
+import org.tomlj.TomlParseResult;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -18,12 +20,15 @@ import java.util.zip.ZipInputStream;
 public class Deobfuscator {
     public static void main(String[] args) {
         try {
-            if (args.length != 1) {
-                System.out.println("Usage: java -jar deobfuscator.jar <input.jar>");
-                return;
+            TomlParseResult result = Toml.parse(Paths.get("deob.toml"));
+            String input = result.getString("input");
+            String output = result.getString("output");
+
+            if (input == null || output == null) {
+                throw new RuntimeException("input and output must be specified in deob.toml");
             }
 
-            List<ClassNode> classes = Deobfuscator.loadJar(Paths.get(args[0] ));
+            List<ClassNode> classes = Deobfuscator.loadJar(Paths.get(input));
             System.out.println("Loaded " + classes.size() + " classes");
             System.out.println("---- Deobfuscating ----");
 
@@ -45,7 +50,7 @@ public class Deobfuscator {
                 transformer.transform(classes);
             }
 
-           Decompiler decompiler = new Decompiler(classes);
+           Decompiler decompiler = new Decompiler(output, classes);
            decompiler.run();
         } catch (Exception ex) {
             ex.printStackTrace();

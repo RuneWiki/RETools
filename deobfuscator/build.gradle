@@ -8,6 +8,7 @@ dependencies {
     implementation 'org.ow2.asm:asm-tree:9.7'
     implementation 'org.ow2.asm:asm-util:9.7'
     implementation 'com.jetbrains.intellij.java:java-decompiler-engine:241.15989.150'
+    implementation 'org.tomlj:tomlj:1.1.1'
 }
 
 java {

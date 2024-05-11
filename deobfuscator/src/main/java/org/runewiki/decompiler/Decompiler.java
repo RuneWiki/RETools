@@ -17,10 +17,12 @@ import java.util.jar.Manifest;
 
 public class Decompiler implements IBytecodeProvider, IResultSaver {
 
+    private final String output;
     private final Fernflower engine;
     private HashMap<String, byte[]> classes = new HashMap<>();
 
-    public Decompiler(List<ClassNode> classNodes) {
+    public Decompiler(String output, List<ClassNode> classNodes) {
+        this.output = output;
         this.engine = new Fernflower(this, this, null, new PrintStreamLogger(System.out));
 
         for (ClassNode node : classNodes) {
@@ -59,16 +61,16 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
     @Override
     public void saveClassFile(String path, String qualifiedName, String entryName, String content, int[] mapping) {
         try {
-            Files.createDirectories(Paths.get("dump", "out"));
+            Files.createDirectories(Paths.get(output));
             if (qualifiedName.contains("/")) {
                 String[] dirs = qualifiedName.split("/");
                 String dir = "";
                 for (int i = 0; i < dirs.length - 1; i++) {
                     dir += dirs[i] + "/";
-                    Files.createDirectories(Paths.get("dump", "out", dir));
+                    Files.createDirectories(Paths.get(output, dir));
                 }
             }
-            Files.write(Paths.get("dump", "out", qualifiedName + ".java"), content.getBytes());
+            Files.write(Paths.get(output, qualifiedName + ".java"), content.getBytes());
         } catch (IOException ex) {
             ex.printStackTrace();
         }
