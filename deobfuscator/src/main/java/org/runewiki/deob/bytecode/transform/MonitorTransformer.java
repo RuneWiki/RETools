@@ -14,8 +14,10 @@ import java.util.Map;
  * Rewrite monitor instructions for Fernflower compatibility
  */
 public class MonitorTransformer extends Transformer {
+    // relies on JsrInliner rewriting RET into GOTO
     private final InsnMatcher JSR_MATCHER = InsnMatcher.compile("ACONST_NULL GOTO");
     private final InsnMatcher SUBROUTINE_MATCHER = InsnMatcher.compile("ASTORE ALOAD MONITOREXIT GOTO");
+
     private final InsnMatcher LOAD_MATCHER = InsnMatcher.compile("ASTORE ALOAD MONITORENTER");
 
     private int subroutinesInlined = 0;
@@ -27,11 +29,9 @@ public class MonitorTransformer extends Transformer {
         inlineSubroutines(method);
         extendTryRanges(method);
         replaceLoadWithDup(method);
-
         return false;
     }
 
-    // todo: finish this method
     private void inlineSubroutines(MethodNode method) {
         Map<AbstractInsnNode, List<AbstractInsnNode>> subroutines = new HashMap<>();
         for (List<AbstractInsnNode> match : this.SUBROUTINE_MATCHER.match(method.instructions)) {
@@ -46,7 +46,7 @@ public class MonitorTransformer extends Transformer {
             }
 
             JumpInsnNode ret = (JumpInsnNode) subroutine.get(3);
-            if (AsmUtil.getNextReal(ret.label) != AsmUtil.getNextReal(jsr.label)) {
+            if (AsmUtil.getNextReal(ret.label) != AsmUtil.getNextReal(jsr)) {
                 continue;
             }
 

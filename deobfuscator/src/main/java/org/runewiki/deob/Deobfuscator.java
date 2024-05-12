@@ -2,6 +2,7 @@ package org.runewiki.deob;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.ClassNode;
+import org.runewiki.asm.classpath.JsrInliner;
 import org.runewiki.asm.transform.Transformer;
 import org.runewiki.decompiler.Decompiler;
 import org.runewiki.deob.bytecode.transform.*;
@@ -112,10 +113,11 @@ public class Deobfuscator {
                 }
 
                 if (entry.getName().endsWith(".class")) {
+                    ClassNode clazz = new ClassNode();
                     ClassReader reader = new ClassReader(zip);
-                    ClassNode node = new ClassNode();
-                    reader.accept(node, ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
-                    classes.add(node);
+                    reader.accept(new JsrInliner(clazz), ClassReader.SKIP_FRAMES);
+
+                    classes.add(clazz);
                 }
              }
         }
