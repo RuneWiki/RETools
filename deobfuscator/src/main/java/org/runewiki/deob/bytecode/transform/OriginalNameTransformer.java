@@ -3,7 +3,6 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.tree.*;
-import org.openrs2.deob.annotation.OriginalClass;
 import org.runewiki.asm.transform.Transformer;
 import org.tomlj.TomlParseResult;
 
@@ -48,7 +47,7 @@ public class OriginalNameTransformer extends Transformer {
     }
 
     @Override
-    public boolean preTransformClass(List<ClassNode> classes, ClassNode clazz) {
+    public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
         AnnotationVisitor annotation = clazz.visitAnnotation("Lorg.openrs2.deob.annotation.OriginalClass;", false);
         annotation.visit("value", libraryAnnotation + "!" + clazz.name);
         annotation.visitEnd();
@@ -66,7 +65,7 @@ public class OriginalNameTransformer extends Transformer {
     }
 
     @Override
-    public boolean preTransformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+    public boolean transformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
         if (method.name.equals("<clinit>")) {
             return false;
         }

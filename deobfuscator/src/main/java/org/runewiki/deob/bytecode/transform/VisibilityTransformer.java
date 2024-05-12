@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class VisibilityTransformer extends Transformer {
     @Override
-    public boolean preTransformClass(List<ClassNode> classes, ClassNode clazz) {
+    public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
         clazz.access = (clazz.access & ~Opcodes.ACC_PRIVATE) | Opcodes.ACC_PUBLIC;
         clazz.access = clazz.access & ~Opcodes.ACC_FINAL;
 

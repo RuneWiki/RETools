@@ -27,14 +27,14 @@ public class Transformer {
             changed = this.prePass(classes);
 
             for (ClassNode clazz : classes) {
-                changed |= this.preTransformClass(classes, clazz);
+                changed |= this.transformClass(classes, clazz);
 
                 for (FieldNode field : clazz.fields) {
                     changed |= this.transformField(classes, clazz, field);
                 }
 
                 for (MethodNode method : clazz.methods) {
-                    changed |= this.preTransformMethod(classes, clazz, method);
+                    changed |= this.transformMethod(classes, clazz, method);
 
                     if (AsmUtil.hasCode(method)) {
                         changed |= this.transformCode(classes, clazz, method);
@@ -59,7 +59,7 @@ public class Transformer {
         return false;
     }
 
-    public boolean preTransformClass(List<ClassNode> classes, ClassNode clazz) {
+    public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
         return false;
     }
 
@@ -67,7 +67,7 @@ public class Transformer {
         return false;
     }
 
-    public boolean preTransformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+    public boolean transformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
         return false;
     }
 

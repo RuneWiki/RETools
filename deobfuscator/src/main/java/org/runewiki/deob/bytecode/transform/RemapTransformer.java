@@ -2,7 +2,6 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.SimpleRemapper;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.AsmUtil;
 import org.runewiki.asm.transform.Transformer;
@@ -59,14 +58,38 @@ public class RemapTransformer extends Transformer {
             }
 
             for (FieldNode field : clazz.fields) {
-                if (field.name.length() < 3) {
+                if (isFieldObfuscated(field.name)) {
                     mappings.put(clazz.name + "." + field.name + field.desc, "field" + ++fieldCount);
                 }
             }
 
             for (MethodNode method : clazz.methods) {
-                if (method.name.length() < 3) {
+                if (method.name.startsWith("<")) {
+                    continue;
+                }
+
+                if (isMethodInherited(classes, clazz, method)) {
+                    // we'll catch these in a 2nd pass
+                    continue;
+                } else if (isMethodObfuscated(method.name)) {
                     mappings.put(clazz.name + "." + method.name + method.desc, "method" + ++methodCount);
+                }
+            }
+        }
+
+        // rename inherited methods
+        for (ClassNode clazz : classes) {
+            for (MethodNode method : clazz.methods) {
+                if (method.name.startsWith("<")) {
+                    continue;
+                }
+
+                if (isMethodObfuscated(method.name) && isMethodInherited(classes, clazz, method)) {
+                    ClassNode superClass = findSuperMethodOwner(classes, clazz, method);
+                    if (superClass != null) {
+                        String superMethod = mappings.get(superClass.name + "." + method.name + method.desc);
+                        mappings.put(clazz.name + "." + method.name + method.desc, superMethod);
+                    }
                 }
             }
         }
@@ -155,5 +178,45 @@ public class RemapTransformer extends Transformer {
                 invokeDynamicInsn.desc = remapper.mapMethodDesc(invokeDynamicInsn.desc);
             }
         }
+    }
+
+    private boolean isFieldObfuscated(String name) {
+        return name.length() < 3;
+    }
+
+    private boolean isMethodObfuscated(String name) {
+        return name.length() < 3;
+    }
+
+    private boolean isMethodInherited(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+        for (ClassNode otherClazz : classes) {
+            if (clazz.superName.equals(otherClazz.name)) {
+                for (MethodNode otherMethod : otherClazz.methods) {
+                    if (otherMethod.name.equals(method.name) && otherMethod.desc.equals(method.desc)) {
+                        return true;
+                    }
+                }
+
+                return isMethodInherited(classes, otherClazz, method);
+            }
+        }
+
+        return false;
+    }
+
+    private ClassNode findSuperMethodOwner(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+        for (ClassNode otherClazz : classes) {
+            if (clazz.superName.equals(otherClazz.name)) {
+                for (MethodNode otherMethod : otherClazz.methods) {
+                    if (otherMethod.name.equals(method.name) && otherMethod.desc.equals(method.desc)) {
+                        return otherClazz;
+                    }
+                }
+
+                return findSuperMethodOwner(classes, otherClazz, method);
+            }
+        }
+
+        return null;
     }
 }

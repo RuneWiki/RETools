@@ -1,10 +1,10 @@
 package org.runewiki.asm;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.InsnList;
+import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.util.Printer;
 
 import java.util.ArrayList;
 import java.util.HashMap;

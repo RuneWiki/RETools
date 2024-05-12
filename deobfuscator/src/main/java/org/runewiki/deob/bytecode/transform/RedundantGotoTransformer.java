@@ -9,7 +9,6 @@ import org.runewiki.asm.AsmUtil;
 import org.runewiki.asm.transform.Transformer;
 
 import java.util.List;
-import java.util.Objects;
 
 /*
  * Remove redundant GOTO instructions
