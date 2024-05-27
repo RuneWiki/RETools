@@ -49,11 +49,11 @@ public class RemapTransformer extends Transformer {
                 String pkg = clazz.name.substring(0, pkgIndex);
                 String name = clazz.name.substring(pkgIndex + 1);
 
-                if (name.length() < 3) {
+                if (isClassObfuscated(name)) {
                     name = pkg + "/class" + ++classCount;
                     mappings.put(clazz.name, name);
                 }
-            } else if (clazz.name.length() < 3) {
+            } else if (isClassObfuscated(clazz.name)) {
                 mappings.put(clazz.name, "class" + ++classCount);
             }
 
@@ -71,7 +71,9 @@ public class RemapTransformer extends Transformer {
                 if (isMethodInherited(classes, clazz, method)) {
                     // we'll catch these in a 2nd pass
                     continue;
-                } else if (isMethodObfuscated(method.name)) {
+                }
+
+                if (isMethodObfuscated(method.name)) {
                     mappings.put(clazz.name + "." + method.name + method.desc, "method" + ++methodCount);
                 }
             }
@@ -178,6 +180,10 @@ public class RemapTransformer extends Transformer {
                 invokeDynamicInsn.desc = remapper.mapMethodDesc(invokeDynamicInsn.desc);
             }
         }
+    }
+
+    private boolean isClassObfuscated(String name) {
+        return name.length() < 3 || name.equals(name.toUpperCase());
     }
 
     private boolean isFieldObfuscated(String name) {
