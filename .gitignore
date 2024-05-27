@@ -3,6 +3,6 @@ build/
 
 .idea/
 
-dump/
-deob.toml
-remap.txt
+/dump/
+/deob.toml
+/remap.txt

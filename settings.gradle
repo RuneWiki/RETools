@@ -3,7 +3,10 @@ rootProject.name = 'RETools'
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
+        gradlePluginPortal()
+        mavenLocal()
         maven { url 'https://www.jetbrains.com/intellij-repository/releases' }
+        maven { url 'https://repo.openrs2.org/repository/openrs2' }
     }
 }
 

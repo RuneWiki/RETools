@@ -22,7 +22,7 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
 
     private final String output;
     private final Fernflower engine;
-    private HashMap<String, byte[]> classes = new HashMap<>();
+    private final HashMap<String, byte[]> classes = new HashMap<>();
 
     public Decompiler(String output, List<ClassNode> classNodes) {
         this.output = output;

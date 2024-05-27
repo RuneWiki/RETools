@@ -8,7 +8,9 @@ dependencies {
     implementation 'org.ow2.asm:asm-commons:9.7'
     implementation 'org.ow2.asm:asm-tree:9.7'
     implementation 'org.ow2.asm:asm-util:9.7'
-    implementation 'com.jetbrains.intellij.java:java-decompiler-engine:241.15989.150'
+    // implementation 'com.jetbrains.intellij.java:java-decompiler-engine:241.15989.150'
+    // implementation 'org.vineflower:vineflower:1.10.1'
+    implementation 'org.openrs2:fernflower:1.1.1'
     implementation 'org.tomlj:tomlj:1.1.1'
 }
 
@@ -22,7 +24,15 @@ application {
 }
 
 jar {
-    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    manifest {
+        attributes(
+            'Main-Class': 'org.runewiki.deob.Deobfuscator'
+        )
+    }
+
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
