@@ -18,7 +18,12 @@ public class GenerateRemap {
     private static final Pattern CLASS_NAME_PATTERN = Pattern.compile("class\\s+(\\w+)");
 
     public static void main(String[] args) {
-        String dir = "C:\\Users\\Pazaz\\Documents\\Lost City\\Client";
+        if (args.length < 1) {
+            System.err.println("usage: GenerateRemap <source dir>");
+            System.exit(1);
+        }
+
+        String dir = args[0];
         Map<String, String> mappings = new HashMap<>();
 
         try {
