@@ -2,13 +2,14 @@ package org.runewiki.deob.ast.transform;
 
 import com.github.javaparser.ast.CompilationUnit;
 import org.tomlj.TomlParseResult;
-import java.util.*;
+
+import java.util.List;
 
 public class AstTransformer {
-    protected TomlParseResult toml;
+    protected TomlParseResult profile;
 
-    public void provide(TomlParseResult toml) {
-        this.toml = toml;
+    public void provide(TomlParseResult profile) {
+        this.profile = profile;
     }
 
     public String getName() {

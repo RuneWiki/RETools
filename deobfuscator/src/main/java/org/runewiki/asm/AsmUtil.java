@@ -1,10 +1,11 @@
 package org.runewiki.asm;
 
-import java.util.*;
-import java.util.function.Predicate;
-
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 public class AsmUtil {
     public static AbstractInsnNode getNextReal(AbstractInsnNode insn) {

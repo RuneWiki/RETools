@@ -9,10 +9,10 @@ import org.tomlj.TomlParseResult;
 import java.util.List;
 
 public class Transformer {
-    protected TomlParseResult toml;
+    protected TomlParseResult profile;
 
-    public void provide(TomlParseResult toml) {
-        this.toml = toml;
+    public void provide(TomlParseResult profile) {
+        this.profile = profile;
     }
 
     public String getName() {

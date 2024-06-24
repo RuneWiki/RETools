@@ -15,10 +15,10 @@ public class OriginalNameTransformer extends Transformer {
     private String libraryAnnotation;
 
     @Override
-    public void provide(TomlParseResult toml) {
-        super.provide(toml);
+    public void provide(TomlParseResult profile) {
+        super.provide(profile);
 
-        libraryAnnotation = toml.getString("profile.original_name.library_annotation");
+        libraryAnnotation = profile.getString("profile.original_name.library_annotation");
         if (libraryAnnotation == null) {
             // a sane default considering the context
             libraryAnnotation = "client";

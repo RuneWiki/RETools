@@ -6,6 +6,7 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.ClassNode;
+import org.tomlj.TomlParseResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,11 +21,13 @@ import java.util.stream.Stream;
 
 public class Decompiler implements IBytecodeProvider, IResultSaver {
 
+    private final TomlParseResult profile;
     private final String output;
     private final Fernflower engine;
     private final HashMap<String, byte[]> classes = new HashMap<>();
 
-    public Decompiler(String output, List<ClassNode> classNodes) {
+    public Decompiler(TomlParseResult profile, String output, List<ClassNode> classNodes) {
+        this.profile = profile;
         this.output = output;
         this.engine = new Fernflower(this, this, null, new PrintStreamLogger(System.out));
 
@@ -58,6 +61,7 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
 
     public void run() {
         try {
+            System.out.println("---- Decompiling ----");
             this.engine.decompileContext();
         } finally {
             this.engine.clearContext();

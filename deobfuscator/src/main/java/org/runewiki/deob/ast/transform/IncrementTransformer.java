@@ -1,10 +1,10 @@
 package org.runewiki.deob.ast.transform;
 
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.expr.*;
-
-import com.github.javaparser.ast.stmt.*;
-import java.util.*;
+import com.github.javaparser.ast.expr.Expression;
+import com.github.javaparser.ast.expr.UnaryExpr;
+import com.github.javaparser.ast.stmt.ExpressionStmt;
+import com.github.javaparser.ast.stmt.ForStmt;
 
 public class IncrementTransformer extends AstTransformer {
     public void transformUnit(CompilationUnit unit) {

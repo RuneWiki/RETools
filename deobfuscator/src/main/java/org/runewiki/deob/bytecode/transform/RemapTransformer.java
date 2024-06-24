@@ -25,10 +25,10 @@ public class RemapTransformer extends Transformer {
     private String remapTxt;
 
     @Override
-    public void provide(TomlParseResult toml) {
-        super.provide(toml);
+    public void provide(TomlParseResult profile) {
+        super.provide(profile);
 
-        remapTxt = toml.getString("profile.remap.remap_txt");
+        remapTxt = profile.getString("profile.remap.remap_txt");
         if (remapTxt == null) {
             // a sane default considering the context
             remapTxt = "remap.txt";
