@@ -71,7 +71,7 @@ public class OpaquePredicateTransformer extends Transformer {
             match.subList(2, match.size()).forEach(method.instructions::remove);
 
             // remove field
-            owner.fields.removeIf(field -> field.name.equals(putstatic.name) && field.desc.equals(putstatic.desc));
+            // owner.fields.removeIf(field -> field.name.equals(putstatic.name) && field.desc.equals(putstatic.desc));
         }
     }
 
