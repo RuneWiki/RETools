@@ -15,18 +15,29 @@ import java.util.Objects;
  */
 public class ExceptionTracingTransformer extends Transformer {
     private final InsnMatcher CATCH_MATCHER = InsnMatcher.compile(
-        "ASTORE NEW DUP " +
-        "LDC INVOKESPECIAL " +
-        "((ALOAD | ILOAD | LLOAD | FLOAD | DLOAD | BIPUSH | SIPUSH | LDC) INVOKEVIRTUAL INVOKEVIRTUAL?)* " +
-        "INVOKEVIRTUAL INVOKESTATIC " +
-        "NEW DUP INVOKESPECIAL ATHROW"
+        "ASTORE? ALOAD? " +
+        "((LDC INVOKESTATIC) | (NEW DUP) " +
+        "((LDC INVOKESPECIAL) | (INVOKESPECIAL LDC INVOKEVIRTUAL)) " +
+        "((ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | (ALOAD IFNULL LDC GOTO LDC) | BIPUSH | SIPUSH | LDC) INVOKEVIRTUAL)* " +
+        "INVOKEVIRTUAL? INVOKEVIRTUAL INVOKESTATIC)? " +
+        "(NEW DUP INVOKESPECIAL)? ATHROW"
     );
 
-    private int tracingTryCatches = 0;
+    /* openrs2 has:
+    (ASTORE ALOAD)?
+    (LDC INVOKESTATIC | NEW DUP
+        (LDC INVOKESPECIAL | INVOKESPECIAL LDC INVOKEVIRTUAL)
+        ((ILOAD | LLOAD | FLOAD | DLOAD | (ALOAD IFNULL LDC GOTO LDC) | BIPUSH | SIPUSH | LDC) INVOKEVIRTUAL)*
+        INVOKEVIRTUAL INVOKESTATIC
+    )?
+    ATHROW
+    */
+
+    private int tryCatches = 0;
 
     @Override
     public void preTransform(List<ClassNode> classes) {
-        this.tracingTryCatches = 0;
+        this.tryCatches = 0;
     }
 
     @Override
@@ -40,7 +51,7 @@ public class ExceptionTracingTransformer extends Transformer {
 
             if (foundTryCatch) {
                 match.forEach(method.instructions::remove);
-                this.tracingTryCatches++;
+                this.tryCatches++;
             }
         }
 
@@ -49,6 +60,6 @@ public class ExceptionTracingTransformer extends Transformer {
 
     @Override
     public void postTransform(List<ClassNode> classes) {
-        System.out.println("Removed " + this.tracingTryCatches + " tracing try/catch blocks");
+        System.out.println("Removed " + this.tryCatches + " tracing try/catch blocks");
     }
 }

@@ -30,10 +30,14 @@ public class OpaquePredicateTransformer extends Transformer {
 
     @Override
     public void preTransform(List<ClassNode> classes) {
+        flowObfuscators.clear();
+        opaquePredicates = 0;
+        stores = 0;
+
         for (ClassNode clazz : classes) {
             for (MethodNode method : clazz.methods) {
                 if (AsmUtil.hasCode(method)) {
-                    findFlowObstructors(method);
+                    findFlowObstructors(method, clazz);
                 }
             }
         }
@@ -41,7 +45,7 @@ public class OpaquePredicateTransformer extends Transformer {
         System.out.println("Identified flow obstructors " + flowObfuscators);
     }
 
-    private void findFlowObstructors(MethodNode method) {
+    private void findFlowObstructors(MethodNode method, ClassNode owner) {
         for (List<AbstractInsnNode> match : this.FLOW_OBSTRUCTOR_INITIALIZER_MATCHER.match(method.instructions)) {
             FieldInsnNode putstatic = (FieldInsnNode) match.get(match.size() - 1);
 
@@ -62,7 +66,12 @@ public class OpaquePredicateTransformer extends Transformer {
             }
 
             flowObfuscators.add(new MemberRef(putstatic).toString());
+
+            // remove initializer
             match.subList(2, match.size()).forEach(method.instructions::remove);
+
+            // remove field
+            owner.fields.removeIf(field -> field.name.equals(putstatic.name) && field.desc.equals(putstatic.desc));
         }
     }
 
