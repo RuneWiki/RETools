@@ -94,7 +94,7 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
                     Files.createDirectories(Paths.get(output, dir));
                 }
             }
-            Files.write(Paths.get(output, qualifiedName + ".java"), content.getBytes());
+            Files.write(Paths.get(output, qualifiedName + ".java"), content.getBytes("UTF-8"));
         } catch (IOException ex) {
             ex.printStackTrace();
         }
