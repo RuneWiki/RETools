@@ -45,7 +45,7 @@ public class Deobfuscator {
     }
 
     public static void registerAstTransformer(AstTransformer transformer) {
-        //System.out.println("Registered transformer: " + transformer.getName());
+        // System.out.println("Registered AST transformer: " + transformer.getName());
         allAstTransformers.put(transformer.getName(), transformer);
         transformer.provide(toml);
     }
