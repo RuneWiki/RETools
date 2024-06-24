@@ -6,9 +6,21 @@ import org.runewiki.asm.classpath.JsrInliner;
 import org.runewiki.asm.transform.Transformer;
 import org.runewiki.decompiler.Decompiler;
 import org.runewiki.deob.bytecode.transform.*;
+import org.runewiki.deob.ast.transform.*;
 import org.tomlj.Toml;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
+
+import com.github.javaparser.*;
+import com.github.javaparser.ast.*;
+import com.github.javaparser.printer.*;
+import com.github.javaparser.printer.configuration.*;
+import com.github.javaparser.printer.configuration.DefaultPrinterConfiguration.ConfigOption.*;
+import com.github.javaparser.printer.configuration.*;
+import com.github.javaparser.printer.configuration.Indentation.IndentType.*;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.*;
+import com.github.javaparser.utils.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,10 +36,17 @@ import java.util.zip.ZipInputStream;
 public class Deobfuscator {
     private static TomlParseResult toml;
     private static Map<String, Transformer> allTransformers = new HashMap<>();
+    private static Map<String, AstTransformer> allAstTransformers = new HashMap<>();
 
     public static void registerTransformer(Transformer transformer) {
         //System.out.println("Registered transformer: " + transformer.getName());
         allTransformers.put(transformer.getName(), transformer);
+        transformer.provide(toml);
+    }
+
+    public static void registerAstTransformer(AstTransformer transformer) {
+        //System.out.println("Registered transformer: " + transformer.getName());
+        allAstTransformers.put(transformer.getName(), transformer);
         transformer.provide(toml);
     }
 
@@ -50,12 +69,14 @@ public class Deobfuscator {
             registerTransformer(new RedundantGotoTransformer());
             registerTransformer(new VisibilityTransformer());
 
+            registerAstTransformer(new IncrementTransformer());
+
             System.out.println("Input: " + input);
             System.out.println("Output: " + output);
 
             List<ClassNode> classes = loadJar(Paths.get(input));
             System.out.println("Loaded " + classes.size() + " classes");
-            System.out.println("---- Deobfuscating ----");
+            System.out.println("---- Deobfuscating bytecode ----");
 
             TomlArray preTransformers = toml.getArray("profile.pre_transformers");
             if (preTransformers != null) {
@@ -92,8 +113,33 @@ public class Deobfuscator {
             }
 
             if (Boolean.TRUE.equals(toml.getBoolean("profile.decompile"))) {
+                System.out.println("---- Decompiling ----");
+
                 Decompiler decompiler = new Decompiler(output, classes);
                 decompiler.run();
+
+                System.out.println("---- Deobfuscating AST ----");
+
+                SourceRoot root = new SourceRoot(Paths.get(output));
+                root.tryToParse();
+                List<CompilationUnit> compilations = root.getCompilationUnits();
+
+                TomlArray astTransformers = toml.getArray("profile.ast_transformers");
+                if (astTransformers != null) {
+                    for (int i = 0; i < astTransformers.size(); i++) {
+                        String name = astTransformers.getString(i);
+
+                        AstTransformer transformer = allAstTransformers.get(name);
+                        if (transformer != null) {
+                            System.out.println("Applying " + name + " AST transformer");
+                            transformer.transform(compilations);
+                        } else {
+                            System.err.println("Unknown AST transformer: " + name);
+                        }
+                    }
+                }
+
+                root.saveAll();
             }
         } catch (Exception ex) {
             ex.printStackTrace();

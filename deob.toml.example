@@ -32,6 +32,10 @@ transformers = [
 
 decompile = true
 
+# post-decompilation source transformers
+ast_transformers = [
+]
+
 [profile.original_name]
 # we produce openrs2-compatible deob annotations but since we don't have a library system
 # we require the profile here to include the openrs2 library annotation. this gets prefixed

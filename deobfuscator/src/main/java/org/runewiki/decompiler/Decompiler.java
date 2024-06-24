@@ -57,8 +57,6 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
     }
 
     public void run() {
-        System.out.println("---- Decompiling ----");
-
         try {
             this.engine.decompileContext();
         } finally {
