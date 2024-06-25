@@ -9,44 +9,37 @@ import com.github.javaparser.ast.stmt.ForStmt;
 public class IncrementTransformer extends AstTransformer {
     public void transformUnit(CompilationUnit unit) {
         unit.walk(stmt -> {
-            if (!(stmt instanceof ExpressionStmt)) {
+            if (!(stmt instanceof ExpressionStmt exprStmt)) {
                 return;
             }
 
-            Expression expr = ((ExpressionStmt) stmt).getExpression();
-            if (!(expr instanceof UnaryExpr)) {
+            if (!(exprStmt.getExpression() instanceof UnaryExpr expr)) {
                 return;
             }
 
-            UnaryExpr unaryExpr = (UnaryExpr) expr;
-            unaryExpr.setOperator(toPostfix(unaryExpr.getOperator()));
+            expr.setOperator(toPostfix(expr.getOperator()));
         });
 
         unit.walk(stmt -> {
-            if (!(stmt instanceof ForStmt)) {
+            if (!(stmt instanceof ForStmt forStmt)) {
                 return;
             }
 
-            ForStmt forStmt = (ForStmt) stmt;
             for (Expression expr : forStmt.getUpdate()) {
-                if (!(expr instanceof UnaryExpr)) {
+                if (!(expr instanceof UnaryExpr unaryExpr)) {
                     continue;
                 }
 
-                UnaryExpr unaryExpr = (UnaryExpr) expr;
                 unaryExpr.setOperator(toPostfix(unaryExpr.getOperator()));
             }
         });
     }
 
     private UnaryExpr.Operator toPostfix(UnaryExpr.Operator op) {
-        switch (op) {
-            case PREFIX_INCREMENT:
-                return UnaryExpr.Operator.POSTFIX_INCREMENT;
-            case PREFIX_DECREMENT:
-                return UnaryExpr.Operator.POSTFIX_DECREMENT;
-            default:
-                return op;
-        }
+        return switch (op) {
+            case PREFIX_INCREMENT -> UnaryExpr.Operator.POSTFIX_INCREMENT;
+            case PREFIX_DECREMENT -> UnaryExpr.Operator.POSTFIX_DECREMENT;
+            default -> op;
+        };
     }
 }

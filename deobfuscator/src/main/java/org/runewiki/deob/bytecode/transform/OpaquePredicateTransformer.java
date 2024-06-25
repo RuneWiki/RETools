@@ -16,10 +16,12 @@ import java.util.Set;
  */
 public class OpaquePredicateTransformer extends Transformer {
     private final InsnMatcher FLOW_OBSTRUCTOR_INITIALIZER_MATCHER = InsnMatcher.compile(
-        "(GETSTATIC | ILOAD) " +
-        "IFEQ " +
-        "(((GETSTATIC ISTORE)? IINC ILOAD) | ((GETSTATIC | ILOAD) IFEQ ICONST GOTO ICONST)) " +
-        "PUTSTATIC"
+        """
+        (GETSTATIC | ILOAD)
+        IFEQ
+        (((GETSTATIC ISTORE)? IINC ILOAD) | ((GETSTATIC | ILOAD) IFEQ ICONST GOTO ICONST))
+        PUTSTATIC
+        """
     );
     private final InsnMatcher OPAQUE_PREDICATE_MATCHER = InsnMatcher.compile("(GETSTATIC | ILOAD) (IFEQ | IFNE)");
     private final InsnMatcher STORE_MATCHER = InsnMatcher.compile("GETSTATIC ISTORE");
@@ -47,13 +49,13 @@ public class OpaquePredicateTransformer extends Transformer {
 
     private void findFlowObstructors(MethodNode method, ClassNode owner) {
         for (List<AbstractInsnNode> match : this.FLOW_OBSTRUCTOR_INITIALIZER_MATCHER.match(method.instructions)) {
-            FieldInsnNode putstatic = (FieldInsnNode) match.get(match.size() - 1);
+            FieldInsnNode putstatic = (FieldInsnNode) match.getLast();
 
-            AbstractInsnNode first = match.get(0);
+            AbstractInsnNode first = match.getFirst();
             if (first instanceof VarInsnNode) {
                 boolean storeFound = false;
                 for (List<AbstractInsnNode> storeMatch : this.STORE_MATCHER.match(method.instructions)) {
-                    FieldInsnNode getstatic = (FieldInsnNode) storeMatch.get(0);
+                    FieldInsnNode getstatic = (FieldInsnNode) storeMatch.getFirst();
                     if (getstatic.name.equals(putstatic.name)) {
                         storeFound = true;
                         break;
@@ -80,7 +82,7 @@ public class OpaquePredicateTransformer extends Transformer {
     }
 
     private boolean isOpaquePredicate(MethodNode method, List<AbstractInsnNode> match) {
-        AbstractInsnNode load = match.get(0);
+        AbstractInsnNode load = match.getFirst();
 
         if (load instanceof FieldInsnNode && load.getOpcode() == Opcodes.GETSTATIC) {
             return isFlowObstructor((FieldInsnNode) load);
@@ -99,7 +101,7 @@ public class OpaquePredicateTransformer extends Transformer {
     }
 
     private boolean isRedundantStore(List<AbstractInsnNode> match) {
-        FieldInsnNode getstatic = (FieldInsnNode) match.get(0);
+        FieldInsnNode getstatic = (FieldInsnNode) match.getFirst();
         return isFlowObstructor(getstatic);
     }
 
@@ -110,7 +112,7 @@ public class OpaquePredicateTransformer extends Transformer {
                 JumpInsnNode branch = (JumpInsnNode) match.get(1);
                 switch (branch.getOpcode()) {
                     case Opcodes.IFEQ:
-                        method.instructions.remove(match.get(0));
+                        method.instructions.remove(match.getFirst());
                         branch.setOpcode(Opcodes.GOTO);
                         break;
                     case Opcodes.IFNE:

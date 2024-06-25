@@ -5,6 +5,7 @@ import org.runewiki.deob.ast.AstDeobfuscator;
 import org.runewiki.deob.bytecode.BytecodeDeobfuscator;
 import org.tomlj.Toml;
 import org.tomlj.TomlParseResult;
+import zwyz.deob.JarUtil;
 
 import java.nio.file.Paths;
 
@@ -12,27 +13,37 @@ public class Deobfuscator {
     public static void main(String[] args) {
         try {
             TomlParseResult profile = Toml.parse(Paths.get("deob.toml"));
+            profile.errors().forEach(error -> System.err.println(error.toString()));
+            if (!profile.errors().isEmpty()) {
+                System.exit(1);
+            }
 
-            String input = profile.getString("profile.input_jar");
-            String output = profile.getString("profile.output_dir");
-            if (input == null || output == null) {
+            String inputJar = profile.getString("profile.input_jar");
+            String outputJar = profile.getString("profile.output_jar");
+            String outputDir = profile.getString("profile.output_dir");
+            if (inputJar == null || outputJar == null || outputDir == null) {
                 System.err.println("deob.toml is invalid, see example file");
                 System.exit(1);
             }
 
-            System.out.println("Input: " + input);
-            System.out.println("Output: " + output);
+            BytecodeDeobfuscator bytecode = new BytecodeDeobfuscator(profile);
+            bytecode.classes = JarUtil.loadJar(Paths.get(inputJar));
+            System.out.println("Loaded " + bytecode.classes.size() + " classes");
 
-            BytecodeDeobfuscator bytecodeDeobfuscator = new BytecodeDeobfuscator(profile);
-            bytecodeDeobfuscator.run();
+            if (Boolean.TRUE.equals(profile.getBoolean("profile.class_deob"))) {
+                bytecode.run();
+            }
 
-            if (Boolean.TRUE.equals(profile.getBoolean("profile.decompile"))) {
-                Decompiler decompiler = new Decompiler(profile, output, bytecodeDeobfuscator.classes);
+            JarUtil.saveJar(Paths.get(outputJar), bytecode.classes);
+
+            if (Boolean.TRUE.equals(profile.getBoolean("profile.class_decompile"))) {
+                Decompiler decompiler = new Decompiler(profile, outputDir, bytecode.classes);
                 decompiler.run();
 
-                // deobfuscate AST (relies on decompiled java output)
-                AstDeobfuscator astDeobfuscator = new AstDeobfuscator(profile);
-                astDeobfuscator.run();
+                if (Boolean.TRUE.equals(profile.getBoolean("profile.java_cleanup"))) {
+                    AstDeobfuscator ast = new AstDeobfuscator(profile);
+                    ast.run();
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();

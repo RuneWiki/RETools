@@ -15,23 +15,15 @@ import java.util.Objects;
  */
 public class ExceptionTracingTransformer extends Transformer {
     private final InsnMatcher CATCH_MATCHER = InsnMatcher.compile(
-        "ASTORE? ALOAD? " +
-        "((LDC INVOKESTATIC) | (NEW DUP) " +
-        "((LDC INVOKESPECIAL) | (INVOKESPECIAL LDC INVOKEVIRTUAL)) " +
-        "((ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | (ALOAD IFNULL LDC GOTO LDC) | BIPUSH | SIPUSH | LDC) INVOKEVIRTUAL)* " +
-        "INVOKEVIRTUAL? INVOKEVIRTUAL INVOKESTATIC)? " +
-        "(NEW DUP INVOKESPECIAL)? ATHROW"
+        """
+        ASTORE? ALOAD?
+        ((LDC INVOKESTATIC) | (NEW DUP)
+        ((LDC INVOKESPECIAL) | (INVOKESPECIAL LDC INVOKEVIRTUAL))
+        ((ILOAD | LLOAD | FLOAD | DLOAD | ALOAD | (ALOAD IFNULL LDC GOTO LDC) | BIPUSH | SIPUSH | LDC) INVOKEVIRTUAL)*
+        INVOKEVIRTUAL? INVOKEVIRTUAL INVOKESTATIC)?
+        (NEW DUP INVOKESPECIAL)? ATHROW
+        """
     );
-
-    /* openrs2 has:
-    (ASTORE ALOAD)?
-    (LDC INVOKESTATIC | NEW DUP
-        (LDC INVOKESPECIAL | INVOKESPECIAL LDC INVOKEVIRTUAL)
-        ((ILOAD | LLOAD | FLOAD | DLOAD | (ALOAD IFNULL LDC GOTO LDC) | BIPUSH | SIPUSH | LDC) INVOKEVIRTUAL)*
-        INVOKEVIRTUAL INVOKESTATIC
-    )?
-    ATHROW
-    */
 
     private int tryCatches = 0;
 

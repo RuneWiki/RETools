@@ -98,7 +98,7 @@ public class InsnMatcher {
             if (Character.isLetterOrDigit(c) || c == '_') {
                 opcode.append(c);
             } else {
-                if (opcode.length() > 0) {
+                if (!opcode.isEmpty()) {
                     InsnMatcher.appendOpcodeRegex(pattern, opcode.toString());
                     opcode.delete(0, opcode.length());
                 }
@@ -109,7 +109,7 @@ public class InsnMatcher {
             }
         }
 
-        if (opcode.length() > 0) {
+        if (!opcode.isEmpty()) {
             InsnMatcher.appendOpcodeRegex(pattern, opcode.toString());
             opcode.delete(0, opcode.length());
         }

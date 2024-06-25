@@ -29,7 +29,6 @@ public class AstDeobfuscator {
     public void run() {
         registerAstTransformer(new IncrementTransformer());
 
-        String input = profile.getString("profile.input_jar");
         String output = profile.getString("profile.output_dir");
 
         System.out.println("---- Deobfuscating AST ----");

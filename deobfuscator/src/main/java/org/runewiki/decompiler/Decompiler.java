@@ -31,11 +31,11 @@ public class Decompiler implements IBytecodeProvider, IResultSaver {
         this.output = output;
         this.engine = new Fernflower(this, this, null, new PrintStreamLogger(System.out));
 
-        for (ClassNode node : classNodes) {
+        for (ClassNode clazz : classNodes) {
             ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
-            node.accept(writer);
-            classes.put(node.name, writer.toByteArray());
-            engine.addSource(new File(node.name + ".class"));
+            clazz.accept(writer);
+            classes.put(clazz.name, writer.toByteArray());
+            engine.addSource(new File(clazz.name + ".class"));
         }
 
         try {

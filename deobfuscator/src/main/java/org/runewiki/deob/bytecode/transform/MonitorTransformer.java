@@ -35,7 +35,7 @@ public class MonitorTransformer extends Transformer {
     private void inlineSubroutines(MethodNode method) {
         Map<AbstractInsnNode, List<AbstractInsnNode>> subroutines = new HashMap<>();
         for (List<AbstractInsnNode> match : this.SUBROUTINE_MATCHER.match(method.instructions)) {
-            subroutines.put(match.get(0), match);
+            subroutines.put(match.getFirst(), match);
         }
 
         for (List<AbstractInsnNode> match : this.JSR_MATCHER.match(method.instructions)) {

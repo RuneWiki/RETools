@@ -11,7 +11,6 @@ import org.tomlj.TomlParseResult;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,20 +34,16 @@ public class BytecodeDeobfuscator {
     }
 
     public void run() throws IOException {
+        registerTransformer(new RedundantGotoTransformer());
         registerTransformer(new ClassOrderTransformer());
         registerTransformer(new ExceptionTracingTransformer());
         registerTransformer(new MonitorTransformer());
         registerTransformer(new OpaquePredicateTransformer());
         registerTransformer(new OriginalNameTransformer());
-        registerTransformer(new RedundantGotoTransformer());
         registerTransformer(new VisibilityTransformer());
-
-        String input = profile.getString("profile.input_jar");
-        String output = profile.getString("profile.output_dir");
+        registerTransformer(new ZwyzTransformer());
 
         System.out.println("---- Deobfuscating bytecode ----");
-        this.classes = loadJar(Paths.get(input));
-        System.out.println("Loaded " + this.classes.size() + " classes");
 
         TomlArray preTransformers = profile.getArray("profile.pre_transformers");
         if (preTransformers != null) {
@@ -65,9 +60,11 @@ public class BytecodeDeobfuscator {
             }
         }
 
-        Transformer remap = new RemapTransformer();
-        remap.provide(profile);
-        remap.transform(this.classes);
+        if (Boolean.TRUE.equals(profile.getBoolean("profile.class_remap"))) {
+            Transformer remap = new RemapTransformer();
+            remap.provide(profile);
+            remap.transform(this.classes);
+        }
 
         TomlArray transformers = profile.getArray("profile.transformers");
         if (transformers != null) {
@@ -93,6 +90,7 @@ public class BytecodeDeobfuscator {
 
              while (true) {
                 entry = zip.getNextEntry();
+
                 if (entry == null) {
                     break;
                 }
@@ -101,7 +99,6 @@ public class BytecodeDeobfuscator {
                     ClassNode clazz = new ClassNode();
                     ClassReader reader = new ClassReader(zip);
                     reader.accept(new JsrInliner(clazz), ClassReader.SKIP_FRAMES);
-
                     classes.add(clazz);
                 }
              }
