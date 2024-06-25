@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class AsmUtil {
     private static final Pattern OBF_PATTERN = Pattern.compile("[A-Za-z]{1,3}");
-    private static final Set<String> OBF_EXCLUDED = Set.of("run", "add", "put", "get", "set");
+    private static final Set<String> OBF_EXCLUDED = Set.of("run", "add", "put", "get", "set", "uid", "dns");
 
     public static boolean isAload(AbstractInsnNode instruction, int var) {
         return instruction.getOpcode() == Opcodes.ALOAD && ((VarInsnNode) instruction).var == var;
