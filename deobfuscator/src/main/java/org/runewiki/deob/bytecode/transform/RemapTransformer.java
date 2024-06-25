@@ -15,8 +15,6 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class RemapTransformer extends Transformer {
-    private Map<String, String> methods = new HashMap<>();
-
     @Override
     public void preTransform(List<ClassNode> classes) {
         var inheriting = computeInheritance(classes);
@@ -55,8 +53,6 @@ public class RemapTransformer extends Transformer {
 
                     if (!map.containsKey(key)) {
                         var renamed = "method" + ++methodCounter;
-
-                        this.methods.put(renamed, key);
 
                         for (var linked : linkedMethods.getOrDefault(key, Set.of(key))) {
                             map.put(linked, renamed);

@@ -27,7 +27,7 @@ public class ParameterChecks {
                             if (argumentTypes.length == 0) {
                                 exclude.add(mi.name);
                             } else {
-                                if (AsmUtil.isIntConstant(instruction.getPrevious()) || Deobfuscator.RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
+                                if (AsmUtil.isIntConstant(instruction.getPrevious())) {
                                     // could remove
                                 } else {
                                     exclude.add(mi.name);
@@ -76,7 +76,7 @@ public class ParameterChecks {
                         var argumentTypes = type.getArgumentTypes();
                         mi.desc = Type.getMethodType(type.getReturnType(), Arrays.copyOfRange(argumentTypes, 0, argumentTypes.length - 1)).getDescriptor();
 
-                        if (AsmUtil.isIntConstant(instruction.getPrevious()) || Deobfuscator.RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
+                        if (AsmUtil.isIntConstant(instruction.getPrevious())) {
                             method.instructions.remove(instruction.getPrevious());
                         } else {
                             throw new AssertionError();
@@ -196,12 +196,10 @@ public class ParameterChecks {
                 if (!(instruction.getOpcode() == Opcodes.ATHROW)) {
                     return false;
                 }
-            } else if (instruction.getOpcode() == Opcodes.RETURN) { // return
+            } else if (instruction.getOpcode() == Opcodes.RETURN) {
                 // ok
             } else {
-                if (!Deobfuscator.RUNELITE) {
-                    return false;
-                }
+                return false;
             }
         }
 
