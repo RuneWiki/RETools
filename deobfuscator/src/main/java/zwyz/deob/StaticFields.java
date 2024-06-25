@@ -70,6 +70,7 @@ public class StaticFields {
                     movedFields.add(field.name);
                     clazz.fields.remove(field);
                     staticsClass.fields.add(field);
+                    field.access = (field.access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC;
                 }
             }
         }

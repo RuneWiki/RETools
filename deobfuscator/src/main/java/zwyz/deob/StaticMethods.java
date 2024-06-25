@@ -89,6 +89,7 @@ public class StaticMethods {
                 if (realOwner != null && !Objects.equals(realOwner, clazz.name)) {
                     clazz.methods.remove(method);
                     classesByName.get(realOwner).methods.add(method);
+                    method.access = (method.access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC;
                 }
 
                 for (var instruction : method.instructions) {
