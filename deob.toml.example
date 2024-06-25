@@ -15,6 +15,7 @@ pre_transformers = [
 
 # post-remap transformers
 transformers = [
+    "Visibility",
     "Zwyz"
 ]
 
@@ -28,3 +29,6 @@ ast_transformers = [
 # we require the profile here to include the openrs2 library annotation. this gets prefixed
 # to the class name i.e. "client!" and "loader!"
 library_annotation = "client"
+
+[profile.zwyz]
+removeUnreachable = true

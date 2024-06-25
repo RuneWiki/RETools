@@ -3,12 +3,22 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.asm.transform.Transformer;
+import org.tomlj.TomlParseResult;
 import zwyz.deob.*;
 
 import java.util.HashSet;
 import java.util.List;
 
 public class ZwyzTransformer extends Transformer {
+    private boolean removeUnreachable = true;
+
+    @Override
+    public void provide(TomlParseResult profile) {
+        super.provide(profile);
+
+        this.removeUnreachable = Boolean.TRUE.equals(this.profile.getBoolean("profile.remove_unreachable"));
+    }
+
     @Override
     public void transform(List<ClassNode> classes) {
         var calledMethods = CalledMethods.run(classes);
@@ -16,7 +26,7 @@ public class ZwyzTransformer extends Transformer {
         var unobfuscatedMethods = new HashSet<String>();
         ErrorHandlers.run(classes, calledMethods, obfuscatedMethods, unobfuscatedMethods);
         ParameterChecks.run(classes, obfuscatedMethods, unobfuscatedMethods);
-        GotoDeobfuscator.run(classes); // Undo goto obfuscation, so that matching statics can work properly
+        GotoDeobfuscator.run(classes, this.removeUnreachable); // Undo goto obfuscation, so that matching statics can work properly
 
         var staticsClass = new ClassNode();
         staticsClass.version = Opcodes.V1_6;

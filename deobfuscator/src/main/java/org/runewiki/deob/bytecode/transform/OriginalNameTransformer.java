@@ -18,10 +18,10 @@ public class OriginalNameTransformer extends Transformer {
     public void provide(TomlParseResult profile) {
         super.provide(profile);
 
-        libraryAnnotation = profile.getString("profile.original_name.library_annotation");
-        if (libraryAnnotation == null) {
+        this.libraryAnnotation = this.profile.getString("profile.original_name.library_annotation");
+        if (this.libraryAnnotation == null) {
             // a sane default considering the context
-            libraryAnnotation = "client";
+            this.libraryAnnotation = "client";
         }
     }
 
