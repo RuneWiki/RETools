@@ -181,18 +181,22 @@ public class AsmUtil {
         removeIf(method.instructions, instruction -> instruction instanceof LabelNode label && !usedLabels.contains(label));
     }
 
-    public static void removeIf(InsnList instructions, Predicate<AbstractInsnNode> condition) {
+    public static int removeIf(InsnList instructions, Predicate<AbstractInsnNode> condition) {
         var instruction = instructions.getFirst();
 
+        int count = 0;
         while (instruction != null) {
             var next = instruction.getNext();
 
             if (condition.test(instruction)) {
                 instructions.remove(instruction);
+                count++;
             }
 
             instruction = next;
         }
+
+        return count;
     }
 
     public static List<LabelNode> getJumpTargets(AbstractInsnNode instruction) {

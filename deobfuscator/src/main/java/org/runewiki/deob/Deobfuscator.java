@@ -1,5 +1,6 @@
 package org.runewiki.deob;
 
+import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.decompiler.Decompiler;
 import org.runewiki.deob.ast.AstDeobfuscator;
 import org.runewiki.deob.bytecode.BytecodeDeobfuscator;
@@ -8,6 +9,8 @@ import org.tomlj.TomlParseResult;
 import zwyz.deob.JarUtil;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Deobfuscator {
     public static void main(String[] args) {
@@ -26,18 +29,20 @@ public class Deobfuscator {
                 System.exit(1);
             }
 
-            BytecodeDeobfuscator bytecode = new BytecodeDeobfuscator(profile);
-            bytecode.classes = JarUtil.loadJar(Paths.get(inputJar));
-            System.out.println("Loaded " + bytecode.classes.size() + " classes");
+            List<ClassNode> classes = new ArrayList<>();
+
+            JarUtil.loadJar(Paths.get(inputJar), classes);
+            System.out.println("Loaded " + classes.size() + " classes");
 
             if (Boolean.TRUE.equals(profile.getBoolean("profile.class_deob"))) {
-                bytecode.run();
+                BytecodeDeobfuscator bytecode = new BytecodeDeobfuscator(profile);
+                bytecode.run(classes);
             }
 
-            JarUtil.saveJar(Paths.get(outputJar), bytecode.classes);
+            JarUtil.saveJar(Paths.get(outputJar), classes);
 
             if (Boolean.TRUE.equals(profile.getBoolean("profile.class_decompile"))) {
-                Decompiler decompiler = new Decompiler(profile, outputDir, bytecode.classes);
+                Decompiler decompiler = new Decompiler(profile, outputDir, classes);
                 decompiler.run();
 
                 if (Boolean.TRUE.equals(profile.getBoolean("profile.java_cleanup"))) {

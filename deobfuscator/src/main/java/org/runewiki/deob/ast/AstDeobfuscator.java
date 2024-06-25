@@ -18,32 +18,29 @@ public class AstDeobfuscator {
 
     public AstDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
+
+        registerAstTransformer(new IncrementTransformer());
     }
 
     private void registerAstTransformer(AstTransformer transformer) {
         // System.out.println("Registered AST transformer: " + transformer.getName());
-        allAstTransformers.put(transformer.getName(), transformer);
+        this.allAstTransformers.put(transformer.getName(), transformer);
         transformer.provide(this.profile);
     }
 
     public void run() {
-        registerAstTransformer(new IncrementTransformer());
-
-        String output = profile.getString("profile.output_dir");
-
         System.out.println("---- Deobfuscating AST ----");
 
-        SourceRoot root = new SourceRoot(Paths.get(output));
-
+        SourceRoot root = new SourceRoot(Paths.get(this.profile.getString("profile.output_dir")));
         root.tryToParseParallelized();
         List<CompilationUnit> compilations = root.getCompilationUnits();
 
-        TomlArray astTransformers = profile.getArray("profile.ast_transformers");
+        TomlArray astTransformers = this.profile.getArray("profile.ast_transformers");
         if (astTransformers != null) {
             for (int i = 0; i < astTransformers.size(); i++) {
                 String name = astTransformers.getString(i);
 
-                AstTransformer transformer = allAstTransformers.get(name);
+                AstTransformer transformer = this.allAstTransformers.get(name);
                 if (transformer != null) {
                     System.out.println("Applying " + name + " AST transformer");
                     transformer.transform(compilations);
