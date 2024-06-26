@@ -2,8 +2,8 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.InsnMatcher;
+import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.MemberRef;
 import org.runewiki.asm.transform.Transformer;
 

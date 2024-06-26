@@ -6,10 +6,9 @@ import org.objectweb.asm.tree.MethodNode;
 import org.runewiki.asm.InsnMatcher;
 import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.transform.Transformer;
+import zwyz.deob.AsmUtil;
 
 import java.util.List;
-
-import zwyz.deob.AsmUtil;
 
 public class BitShiftTransformer extends Transformer {
     private final InsnMatcher CONST_SHIFT_MATCHER = InsnMatcher.compile(

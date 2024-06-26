@@ -2,16 +2,38 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.InsnMatcher;
+import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.transform.Transformer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
- * Rewrite monitor instructions for Fernflower compatibility
+/**
+ * A [Transformer] that rewrites `synchronized` blocks produced by older
+ * versions of the Java compiler (1.3 and older) into a more modern format.
+ * This is required for compatibility with Fernflower, which does not
+ * understand the older format.
+ *
+ * This transformer depends on [JSRInlinerAdapter].
+ *
+ * It makes three changes:
+ *
+ * - Inlines `MONITOREXIT` subroutines. [JSRInlinerAdapter] only replaces
+ *   `JSR`/`RET` calls with `GOTO`. Fernflower needs the actual body of the
+ *   subroutine to be inlined.
+ *
+ * - Extends exception handler ranges to cover the `MONITOREXIT` instruction.
+ *
+ * - Replaces `ASTORE ALOAD MONITORENTER` sequences with `DUP MONITORENTER`,
+ *   which prevents Fernflower from emitting a redundant variable declaration.
+ *
+ * There is one final difference that this transformer does not deal with:
+ * modern versions of the Java compiler add a second exception handler range to
+ * each synchronized block covering the `MONITOREXIT` sequence, with the
+ * handler pointing to the same `MONITOREXIT` sequence. Adding this isn't
+ * necessary for Fernflower compatibility.
  */
 public class MonitorTransformer extends Transformer {
     // relies on JsrInliner rewriting RET into GOTO
