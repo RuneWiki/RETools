@@ -1,16 +1,22 @@
-## RE Tools
+<div align="center">
 
-An all-in-one program to aid deobfuscating and refactoring all kinds of RuneScape applets.  
+<h1>Reverse Engineering Tools (RETools)</h1>
+
+</div>
+
+This project requires Java 21.
+
+### Deobfuscator
+
+An all-in-one program for decompiling and refactoring all sorts of Java applets.  
 It isn't mean to be limited to any specific years and is intended to be comprehensive.
 
 Options when deobfuscating are profile-driven, you should be creating a deob.toml tailored to that applet with any transformers you need for it enabled.  
-Do not enable everything - techniques change and improve over time!
+Do not enable everything - techniques are different for every applet!
 
-### Requirements
+There's [an example toml here](./deob.toml.example) and many real uses in [rs-deob](https://github.com/RuneWiki/rs-deob/).
 
-- Java 21 (LTS)
+#### Credits
 
-## Credits
-
-- OpenRS2 (Graham), for which the design was based off and many transformers ported directly over from Kotlin.
+- OpenRS2 (Graham), which the transformer design was based off and many transformers ported directly over from Kotlin.
 - Zwyz, who worked on their own Java-based deobfuscator and allowed that code to live on here.
