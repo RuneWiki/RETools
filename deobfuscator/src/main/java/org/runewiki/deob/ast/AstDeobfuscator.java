@@ -1,8 +1,14 @@
 package org.runewiki.deob.ast;
 
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.symbolsolver.JavaSymbolSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
 import org.runewiki.deob.ast.transform.AstTransformer;
+import org.runewiki.deob.ast.transform.BinaryExprOrderTransformer;
 import org.runewiki.deob.ast.transform.IncrementTransformer;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
@@ -20,6 +26,7 @@ public class AstDeobfuscator {
         this.profile = profile;
 
         registerAstTransformer(new IncrementTransformer());
+        registerAstTransformer(new BinaryExprOrderTransformer());
     }
 
     private void registerAstTransformer(AstTransformer transformer) {
@@ -31,7 +38,17 @@ public class AstDeobfuscator {
     public void run() {
         System.out.println("---- Deobfuscating AST ----");
 
-        SourceRoot root = new SourceRoot(Paths.get(this.profile.getString("profile.output_dir")));
+        String sources = this.profile.getString("profile.output_dir");
+
+        var solver = new CombinedTypeSolver();
+        solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
+        solver.add(new JavaParserTypeSolver(sources));
+
+        var config = new ParserConfiguration();
+        config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
+        config.setSymbolResolver(new JavaSymbolSolver(solver));
+
+        SourceRoot root = new SourceRoot(Paths.get(sources), config);
         root.tryToParseParallelized();
         List<CompilationUnit> compilations = root.getCompilationUnits();
 

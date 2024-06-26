@@ -2,7 +2,7 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-import org.runewiki.asm.AsmUtil;
+import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.InsnMatcher;
 import org.runewiki.asm.MemberRef;
 import org.runewiki.asm.transform.Transformer;
@@ -38,7 +38,7 @@ public class OpaquePredicateTransformer extends Transformer {
 
         for (ClassNode clazz : classes) {
             for (MethodNode method : clazz.methods) {
-                if (AsmUtil.hasCode(method)) {
+                if (InsnNodeUtil.hasCode(method)) {
                     findFlowObstructors(method, clazz);
                 }
             }

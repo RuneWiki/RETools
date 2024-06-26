@@ -26,6 +26,7 @@ public class BytecodeDeobfuscator {
         registerTransformer(new RedundantGotoTransformer());
         registerTransformer(new VisibilityTransformer());
         registerTransformer(new ZwyzTransformer());
+        registerTransformer(new BitShiftTransformer());
     }
 
     private void registerTransformer(Transformer transformer) {

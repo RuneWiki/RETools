@@ -2,7 +2,7 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
-import org.runewiki.asm.AsmUtil;
+import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.InsnMatcher;
 import org.runewiki.asm.transform.Transformer;
 
@@ -40,13 +40,13 @@ public class MonitorTransformer extends Transformer {
 
         for (List<AbstractInsnNode> match : this.JSR_MATCHER.match(method.instructions)) {
             JumpInsnNode jsr = (JumpInsnNode) match.get(1);
-            List<AbstractInsnNode> subroutine = subroutines.get(AsmUtil.getNextReal(jsr.label));
+            List<AbstractInsnNode> subroutine = subroutines.get(InsnNodeUtil.getNextReal(jsr.label));
             if (subroutine == null) {
                 continue;
             }
 
             JumpInsnNode ret = (JumpInsnNode) subroutine.get(3);
-            if (AsmUtil.getNextReal(ret.label) != AsmUtil.getNextReal(jsr)) {
+            if (InsnNodeUtil.getNextReal(ret.label) != InsnNodeUtil.getNextReal(jsr)) {
                 continue;
             }
 
@@ -64,22 +64,22 @@ public class MonitorTransformer extends Transformer {
                 continue;
             }
 
-            AbstractInsnNode monitorenter = AsmUtil.getPreviousReal(tryCatch.start);
+            AbstractInsnNode monitorenter = InsnNodeUtil.getPreviousReal(tryCatch.start);
             if (monitorenter.getOpcode() != Opcodes.MONITORENTER) {
                 continue;
             }
 
-            AbstractInsnNode aload = AsmUtil.getNextReal(tryCatch.end);
+            AbstractInsnNode aload = InsnNodeUtil.getNextReal(tryCatch.end);
             if (aload.getOpcode() != Opcodes.ALOAD) {
                 continue;
             }
 
-            AbstractInsnNode monitorexit = AsmUtil.getNextReal(aload);
+            AbstractInsnNode monitorexit = InsnNodeUtil.getNextReal(aload);
             if (monitorexit.getOpcode() != Opcodes.MONITOREXIT) {
                 continue;
             }
 
-            AbstractInsnNode end = AsmUtil.getNextReal(monitorexit.getNext());
+            AbstractInsnNode end = InsnNodeUtil.getNextReal(monitorexit.getNext());
             if (end == null) {
                 continue;
             }

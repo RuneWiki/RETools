@@ -3,7 +3,7 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.runewiki.asm.AsmUtil;
+import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.InsnMatcher;
 import org.runewiki.asm.transform.Transformer;
 
@@ -34,12 +34,12 @@ public class ExceptionTracingTransformer extends Transformer {
 
     @Override
     public boolean transformCode(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
-        List<List<AbstractInsnNode>> matches = this.CATCH_MATCHER.match(method);
+        var matches = this.CATCH_MATCHER.match(method);
 
         for (List<AbstractInsnNode> match : matches) {
             boolean foundTryCatch = method.tryCatchBlocks.removeIf(tryCatch ->
                 Objects.equals(tryCatch.type, "java/lang/RuntimeException") &&
-                AsmUtil.getNextReal(tryCatch.handler).equals(match.get(0)));
+                InsnNodeUtil.getNextReal(tryCatch.handler).equals(match.get(0)));
 
             if (foundTryCatch) {
                 match.forEach(method.instructions::remove);

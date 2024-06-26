@@ -3,7 +3,7 @@ package org.runewiki.asm.transform;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.runewiki.asm.AsmUtil;
+import org.runewiki.asm.InsnNodeUtil;
 import org.tomlj.TomlParseResult;
 
 import java.util.List;
@@ -36,7 +36,7 @@ public class Transformer {
                 for (MethodNode method : clazz.methods) {
                     changed |= this.transformMethod(classes, clazz, method);
 
-                    if (AsmUtil.hasCode(method)) {
+                    if (InsnNodeUtil.hasCode(method)) {
                         changed |= this.transformCode(classes, clazz, method);
                     }
 
