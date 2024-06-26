@@ -21,10 +21,6 @@ java {
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.compilerArgs += "--enable-preview"
-}
-
 application {
     mainClass = "org.runewiki.deob.Deobfuscator"
 }
