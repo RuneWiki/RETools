@@ -74,10 +74,10 @@ public class SortFieldsName {
             var initAccessOrder = computeIndexMap(initAccessOrderList);
 
             clazz.fields.sort(Comparator
-                    .<FieldNode>comparingInt(fieldIndices::get)
-                    .thenComparingInt(f -> initAccessOrder.getOrDefault(f.name, Integer.MAX_VALUE))
-                    .thenComparing(f -> f.desc)
-                    .thenComparing(f -> f.name)
+                .<FieldNode>comparingInt(fieldIndices::get)
+                .thenComparingInt(f -> initAccessOrder.getOrDefault(f.name, Integer.MAX_VALUE))
+                .thenComparing(f -> f.desc)
+                .thenComparing(f -> f.name)
             );
         }
     }
@@ -85,16 +85,16 @@ public class SortFieldsName {
     private static String findObfuscatedName(List<AnnotationNode> invisibleAnnotations, List<AnnotationNode> visibleAnnotations) {
         if (invisibleAnnotations != null) {
             for (var annotation : invisibleAnnotations) {
-                if (annotation.desc.equals("LObfuscatedName;")) {
-                    return ((String) annotation.values.get(1));
+                if (annotation.desc.equals("Lorg/openrs2/deob/annotation/OriginalMember;")) {
+                    return ((String) annotation.values.get(2));
                 }
             }
         }
 
         if (visibleAnnotations != null) {
             for (var annotation : visibleAnnotations) {
-                if (annotation.desc.equals("LObfuscatedName;")) {
-                    return ((String) annotation.values.get(1));
+                if (annotation.desc.equals("Lorg/openrs2/deob/annotation/OriginalMember;")) {
+                    return ((String) annotation.values.get(2));
                 }
             }
         }
