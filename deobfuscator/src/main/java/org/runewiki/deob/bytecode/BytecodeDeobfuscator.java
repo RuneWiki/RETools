@@ -12,13 +12,13 @@ import java.util.List;
 import java.util.Map;
 
 public class BytecodeDeobfuscator {
-    private TomlParseResult profile;
-    private Map<String, Transformer> allTransformers = new HashMap<>();
+    private final TomlParseResult profile;
+    private final Map<String, Transformer> allTransformers = new HashMap<>();
 
     public BytecodeDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
 
-        registerTransformer(new LegacyClassOrderTransformer());
+        registerTransformer(new SortClassesLegacyTransformer());
         registerTransformer(new ExceptionTracingTransformer());
         registerTransformer(new MonitorTransformer());
         registerTransformer(new OpaquePredicateTransformer());
@@ -27,6 +27,10 @@ public class BytecodeDeobfuscator {
         registerTransformer(new VisibilityTransformer());
         registerTransformer(new ZwyzTransformer());
         registerTransformer(new BitShiftTransformer());
+        registerTransformer(new SortFieldsNameTransformer());
+        registerTransformer(new SortMethodsLineOrderTransformer());
+        registerTransformer(new VariableSplitterTransformer());
+        registerTransformer(new ExpressionSorterTransformer());
     }
 
     private void registerTransformer(Transformer transformer) {

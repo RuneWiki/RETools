@@ -12,16 +12,6 @@ public class VariableSplitter {
     private InstructionBlock startBlock;
     private int firstLocalIndex;
 
-    public static void run(List<ClassNode> classes) {
-        for (var clazz : classes) {
-            for (var method : clazz.methods) {
-                if ((method.access & Opcodes.ACC_ABSTRACT) == 0) {
-                    new VariableSplitter().run(method);
-                }
-            }
-        }
-    }
-
     public void run(MethodNode method) {
         firstLocalIndex = AsmUtil.getFirstLocalIndex(method);
         startBlock = new InstructionBlock(null);

@@ -1,25 +1,22 @@
-package zwyz.deob;
+package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
+import org.runewiki.asm.transform.Transformer;
+import zwyz.deob.AsmUtil;
 
-import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
+import java.util.ArrayDeque;
 
-public class ExpressionSorter {
-    public static void run(List<ClassNode> classes) {
-        for (var clazz : classes) {
-            for (var method : clazz.methods) {
-                if ((method.access & Opcodes.ACC_ABSTRACT) == 0) {
-                    run(method);
-                }
-            }
+public class ExpressionSorterTransformer extends Transformer {
+    @Override
+    public boolean transformCode(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+        if ((method.access & Opcodes.ACC_ABSTRACT) != 0) {
+            return false;
         }
-    }
 
-    public static void run(MethodNode method) {
         var newInstructions = new MethodNode();
         var stack = new ArrayDeque<Expression>();
 
@@ -42,7 +39,7 @@ public class ExpressionSorter {
                     }
                 }
 
-                if (stack.size() >= 1 && AsmUtil.isComparison(stack.getLast().opcode()) && (instruction.getOpcode() == Opcodes.IFEQ || instruction.getOpcode() == Opcodes.IFNE)) {
+                if (!stack.isEmpty() && AsmUtil.isComparison(stack.getLast().opcode()) && (instruction.getOpcode() == Opcodes.IFEQ || instruction.getOpcode() == Opcodes.IFNE)) {
                     var cmp = ((Expression.BinaryExpression) stack.removeLast());
                     var a = cmp.argument1();
                     var b = cmp.argument2();
@@ -72,6 +69,7 @@ public class ExpressionSorter {
 
         method.instructions = newInstructions.instructions;
         method.tryCatchBlocks = newInstructions.tryCatchBlocks;
+        return false;
     }
 
     private static boolean isCommutativeCondition(int opcode) {
@@ -262,9 +260,9 @@ public class ExpressionSorter {
 
             // Constants need to be to the right for multiplier deobfuscation, and for sorting subexpressions with multipliers
             case Opcodes.ACONST_NULL, Opcodes.ICONST_M1, Opcodes.ICONST_0, Opcodes.ICONST_1, Opcodes.ICONST_2,
-                    Opcodes.ICONST_3, Opcodes.ICONST_4, Opcodes.ICONST_5, Opcodes.LCONST_0, Opcodes.LCONST_1,
-                    Opcodes.FCONST_0, Opcodes.FCONST_1, Opcodes.FCONST_2, Opcodes.DCONST_0, Opcodes.DCONST_1,
-                    Opcodes.BIPUSH, Opcodes.SIPUSH, Opcodes.LDC -> 0;
+                 Opcodes.ICONST_3, Opcodes.ICONST_4, Opcodes.ICONST_5, Opcodes.LCONST_0, Opcodes.LCONST_1,
+                 Opcodes.FCONST_0, Opcodes.FCONST_1, Opcodes.FCONST_2, Opcodes.DCONST_0, Opcodes.DCONST_1,
+                 Opcodes.BIPUSH, Opcodes.SIPUSH, Opcodes.LDC -> 0;
 
             default -> throw new IllegalStateException("Unexpected value: " + opcode);
         };
@@ -286,15 +284,15 @@ public class ExpressionSorter {
 
         switch (opcode) {
             case Opcodes.ACONST_NULL, Opcodes.ICONST_M1, Opcodes.ICONST_0, Opcodes.ICONST_1, Opcodes.ICONST_2,
-                    Opcodes.ICONST_3, Opcodes.ICONST_4, Opcodes.ICONST_5, Opcodes.LCONST_0, Opcodes.LCONST_1,
-                    Opcodes.FCONST_0, Opcodes.FCONST_1, Opcodes.FCONST_2, Opcodes.DCONST_0, Opcodes.DCONST_1 -> {
+                 Opcodes.ICONST_3, Opcodes.ICONST_4, Opcodes.ICONST_5, Opcodes.LCONST_0, Opcodes.LCONST_1,
+                 Opcodes.FCONST_0, Opcodes.FCONST_1, Opcodes.FCONST_2, Opcodes.DCONST_0, Opcodes.DCONST_1 -> {
                 return new Expression.NullaryExpression(opcode);
             }
 
             case Opcodes.INEG, Opcodes.LNEG, Opcodes.FNEG, Opcodes.DNEG, Opcodes.I2L, Opcodes.I2F, Opcodes.I2D,
-                    Opcodes.L2I, Opcodes.L2F, Opcodes.L2D, Opcodes.F2I, Opcodes.F2L, Opcodes.F2D, Opcodes.D2I,
-                    Opcodes.D2L, Opcodes.D2F, Opcodes.I2B, Opcodes.I2C, Opcodes.I2S, Opcodes.ARRAYLENGTH -> {
-                if (stack.size() >= 1) {
+                 Opcodes.L2I, Opcodes.L2F, Opcodes.L2D, Opcodes.F2I, Opcodes.F2L, Opcodes.F2D, Opcodes.D2I,
+                 Opcodes.D2L, Opcodes.D2F, Opcodes.I2B, Opcodes.I2C, Opcodes.I2S, Opcodes.ARRAYLENGTH -> {
+                if (!stack.isEmpty()) {
                     var arg = stack.removeLast();
                     return new Expression.UnaryExpression(opcode, arg);
                 } else {
@@ -303,12 +301,12 @@ public class ExpressionSorter {
             }
 
             case Opcodes.IALOAD, Opcodes.LALOAD, Opcodes.FALOAD, Opcodes.DALOAD, Opcodes.AALOAD, Opcodes.BALOAD,
-                    Opcodes.CALOAD, Opcodes.SALOAD, Opcodes.IADD, Opcodes.LADD, Opcodes.FADD, Opcodes.DADD,
-                    Opcodes.ISUB, Opcodes.LSUB, Opcodes.FSUB, Opcodes.DSUB, Opcodes.IMUL, Opcodes.LMUL, Opcodes.FMUL,
-                    Opcodes.DMUL, Opcodes.IDIV, Opcodes.LDIV, Opcodes.FDIV, Opcodes.DDIV, Opcodes.IREM, Opcodes.LREM,
-                    Opcodes.FREM, Opcodes.DREM, Opcodes.ISHL, Opcodes.ISHR, Opcodes.LSHL, Opcodes.IUSHR, Opcodes.LUSHR,
-                    Opcodes.IAND, Opcodes.LAND, Opcodes.IOR, Opcodes.LOR, Opcodes.IXOR, Opcodes.LXOR, Opcodes.LCMP, Opcodes.FCMPL,
-                    Opcodes.FCMPG, Opcodes.DCMPL, Opcodes.DCMPG -> {
+                 Opcodes.CALOAD, Opcodes.SALOAD, Opcodes.IADD, Opcodes.LADD, Opcodes.FADD, Opcodes.DADD,
+                 Opcodes.ISUB, Opcodes.LSUB, Opcodes.FSUB, Opcodes.DSUB, Opcodes.IMUL, Opcodes.LMUL, Opcodes.FMUL,
+                 Opcodes.DMUL, Opcodes.IDIV, Opcodes.LDIV, Opcodes.FDIV, Opcodes.DDIV, Opcodes.IREM, Opcodes.LREM,
+                 Opcodes.FREM, Opcodes.DREM, Opcodes.ISHL, Opcodes.ISHR, Opcodes.LSHL, Opcodes.IUSHR, Opcodes.LUSHR,
+                 Opcodes.IAND, Opcodes.LAND, Opcodes.IOR, Opcodes.LOR, Opcodes.IXOR, Opcodes.LXOR, Opcodes.LCMP, Opcodes.FCMPL,
+                 Opcodes.FCMPG, Opcodes.DCMPL, Opcodes.DCMPG -> {
                 if (stack.size() >= 2) {
                     var arg1 = stack.removeLast();
                     var arg0 = stack.removeLast();
@@ -332,7 +330,7 @@ public class ExpressionSorter {
             }
 
             case Opcodes.GETFIELD -> {
-                if (stack.size() >= 1) {
+                if (!stack.isEmpty()) {
                     var arg = stack.removeLast();
                     var fieldInsn = (FieldInsnNode) instruction;
                     return new Expression.FieldInstruction(opcode, fieldInsn.owner, fieldInsn.name, fieldInsn.desc, arg);

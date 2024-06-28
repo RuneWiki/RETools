@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 
 public class AstDeobfuscator {
-    private TomlParseResult profile;
-    private Map<String, AstTransformer> allAstTransformers = new HashMap<>();
+    private final TomlParseResult profile;
+    private final Map<String, AstTransformer> allAstTransformers = new HashMap<>();
 
     public AstDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
