@@ -7,9 +7,7 @@ import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderType
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
-import org.runewiki.deob.ast.transform.AstTransformer;
-import org.runewiki.deob.ast.transform.BinaryExprOrderTransformer;
-import org.runewiki.deob.ast.transform.IncrementTransformer;
+import org.runewiki.deob.ast.transform.*;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
 
@@ -25,8 +23,25 @@ public class AstDeobfuscator {
     public AstDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
 
-        registerAstTransformer(new IncrementTransformer());
+        registerAstTransformer(new AddSubTransformer());
         registerAstTransformer(new BinaryExprOrderTransformer());
+        registerAstTransformer(new BitMaskTransformer());
+        registerAstTransformer(new CharLiteralTransformer());
+        registerAstTransformer(new ComplementTransformer());
+        registerAstTransformer(new EncloseTransformer());
+        registerAstTransformer(new ForLoopConditionTransformer());
+//        registerAstTransformer(new GlTransformer());
+        registerAstTransformer(new HexLiteralTransformer());
+        registerAstTransformer(new IdentityTransformer());
+        registerAstTransformer(new IfElseTransformer());
+        registerAstTransformer(new IncrementTransformer());
+        registerAstTransformer(new NegativeLiteralTransformer());
+        registerAstTransformer(new NewInstanceTransformer());
+        registerAstTransformer(new NotTransformer());
+        registerAstTransformer(new RedundantCastTransformer());
+        registerAstTransformer(new TernaryTransformer());
+        registerAstTransformer(new UnencloseTransformer());
+        registerAstTransformer(new ValueOfTransformer());
     }
 
     private void registerAstTransformer(AstTransformer transformer) {
@@ -44,7 +59,7 @@ public class AstDeobfuscator {
         solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
         solver.add(new JavaParserTypeSolver(sources));
 
-        var config = new ParserConfiguration();
+		var config = new ParserConfiguration();
         config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
         config.setSymbolResolver(new JavaSymbolSolver(solver));
 

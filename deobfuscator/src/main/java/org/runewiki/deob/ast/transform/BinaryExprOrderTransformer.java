@@ -5,23 +5,22 @@ import com.github.javaparser.ast.expr.BinaryExpr;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.LiteralExpr;
 import com.github.javaparser.ast.expr.ThisExpr;
-import org.runewiki.deob.ast.util.ExprUtil;
+import org.runewiki.deob.ast.util.NodeUtil;
+
+import static org.runewiki.deob.ast.util.ExprUtil.flip;
 
 public class BinaryExprOrderTransformer extends AstTransformer {
+
     @Override
     public void transformUnit(CompilationUnit unit) {
-        unit.walk(node -> {
-            if (!(node instanceof BinaryExpr expr)) {
-                return;
-            }
-
-            var op = ExprUtil.flip(expr.getOperator());
+        walk(unit, BinaryExpr.class, expr -> {
+            var op = flip(expr.getOperator());
             if (op == null) {
                 return;
             }
 
             var type = expr.calculateResolvedType();
-            if (op == BinaryExpr.Operator.PLUS && ExprUtil.isString(type)) {
+            if (op == BinaryExpr.Operator.PLUS && NodeUtil.isString(type)) {
                 return;
             }
 
@@ -29,8 +28,8 @@ public class BinaryExprOrderTransformer extends AstTransformer {
             var right = expr.getRight();
             if (isLiteralOrThisExpr(left) && !isLiteralOrThisExpr(right)) {
                 expr.setOperator(op);
-                expr.setRight(left);
-                expr.setLeft(right);
+                expr.setLeft(right.clone());
+                expr.setRight(left.clone());
             }
         });
     }
