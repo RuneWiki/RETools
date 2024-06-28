@@ -8,7 +8,7 @@ import java.util.List;
 /*
  * Reorder classes based on old rs2 revisions 185-303
  */
-public class LegacyClassOrderTransformer extends Transformer {
+public class SortClassesLegacyTransformer extends Transformer {
     @Override
     public boolean prePass(List<ClassNode> classes) {
         // names are a-z, then ab-az, ac-az

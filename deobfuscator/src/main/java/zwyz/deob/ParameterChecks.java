@@ -10,11 +10,13 @@ import java.util.List;
 import java.util.Objects;
 
 public class ParameterChecks {
+    private static final boolean COMPLEX_PARAMETER_CHECKS = true;
+
     public static void run(List<ClassNode> classes, HashSet<String> obfuscatedMethods, HashSet<String> unobfuscatedMethods) {
         // scan for constants
         var exclude = new HashSet<String>();
 
-        if (Deobfuscator.COMPLEX_PARAMETER_CHECKS) {
+        if (COMPLEX_PARAMETER_CHECKS) {
             for (var clazz : classes) {
                 for (var method : clazz.methods) {
                     var instruction = method.instructions.getFirst();
@@ -124,7 +126,7 @@ public class ParameterChecks {
         }
 
         if (removed && kept) {
-            if (Deobfuscator.COMPLEX_PARAMETER_CHECKS) {
+            if (COMPLEX_PARAMETER_CHECKS) {
                 method.instructions = original.instructions;
                 return false; // revert
             } else {
@@ -176,7 +178,7 @@ public class ParameterChecks {
 
         var endLabel = ((JumpInsnNode) instruction).label;
 
-        if (!Deobfuscator.COMPLEX_PARAMETER_CHECKS) {
+        if (!COMPLEX_PARAMETER_CHECKS) {
             instruction = instruction.getNext();
             if (AsmUtil.isNew(instruction, "java/lang/IllegalStateException")) { // new java/lang/IllegalStateException
                 // dup

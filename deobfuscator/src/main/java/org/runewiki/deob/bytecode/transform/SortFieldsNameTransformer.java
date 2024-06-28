@@ -1,10 +1,11 @@
-package zwyz.deob;
+package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.runewiki.asm.transform.Transformer;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -12,11 +13,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-public class SortFieldsName {
-    public static void run(List<ClassNode> classes) {
+// this relies on being a post-remap transformer AND annotations to exist
+public class SortFieldsNameTransformer extends Transformer {
+    private boolean UNRELIABLE_CLASS_ORDER = true; // todo: load obfmap.txt from profile
+
+    @Override
+    public void transform(List<ClassNode> classes) {
         var names = (List<String>) new ArrayList<String>();
 
-        if (!Deobfuscator.UNRELIABLE_CLASS_ORDER) {
+        if (!UNRELIABLE_CLASS_ORDER) {
             // Compute obfuscated name order for this build based on class order
             for (var clazz : classes) {
                 var obfuscatedName = findObfuscatedName(clazz.invisibleAnnotations, clazz.visibleAnnotations);
@@ -74,10 +79,10 @@ public class SortFieldsName {
             var initAccessOrder = computeIndexMap(initAccessOrderList);
 
             clazz.fields.sort(Comparator
-                .<FieldNode>comparingInt(fieldIndices::get)
-                .thenComparingInt(f -> initAccessOrder.getOrDefault(f.name, Integer.MAX_VALUE))
-                .thenComparing(f -> f.desc)
-                .thenComparing(f -> f.name)
+                    .<FieldNode>comparingInt(fieldIndices::get)
+                    .thenComparingInt(f -> initAccessOrder.getOrDefault(f.name, Integer.MAX_VALUE))
+                    .thenComparing(f -> f.desc)
+                    .thenComparing(f -> f.name)
             );
         }
     }

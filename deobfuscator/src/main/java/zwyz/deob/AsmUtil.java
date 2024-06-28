@@ -282,7 +282,7 @@ public class AsmUtil {
         return OBF_PATTERN.matcher(name).matches() && !OBF_EXCLUDED.contains(name);
     }
 
-    static boolean isComparison(int opcode) {
+    public static boolean isComparison(int opcode) {
         return opcode == Opcodes.LCMP || opcode == Opcodes.FCMPL || opcode == Opcodes.FCMPG || opcode == Opcodes.DCMPL || opcode == Opcodes.DCMPG;
     }
 }

@@ -23,24 +23,9 @@ public class ZwyzTransformer extends Transformer {
         var calledMethods = CalledMethods.run(classes);
         var obfuscatedMethods = new HashSet<String>();
         var unobfuscatedMethods = new HashSet<String>();
+
         ErrorHandlers.run(classes, calledMethods, obfuscatedMethods, unobfuscatedMethods);
         ParameterChecks.run(classes, obfuscatedMethods, unobfuscatedMethods);
-        GotoDeobfuscator.run(classes, this.removeUnreachable); // Undo goto obfuscation, so that matching statics can work properly
-
-//        var staticsClass = new ClassNode();
-//        staticsClass.version = Opcodes.V1_6;
-//        staticsClass.access = Opcodes.ACC_PUBLIC;
-//        staticsClass.name = "statics";
-//        staticsClass.superName = "java/lang/Object";
-//        staticsClass.sourceFile = "statics.java";
-//        classes.add(staticsClass);
-
-        // todo: move extracting statics into its own transformer
-        // StaticMethods.run(classes, calledMethods, obfuscatedMethods, staticsClass);
-        SortMethods.run(classes);
-        // StaticFields.run(classes, staticsClass);
-        SortFieldsName.run(classes);
-        VariableSplitter.run(classes);
-        ExpressionSorter.run(classes);
+        GotoDeobfuscator.run(classes, this.removeUnreachable);
     }
 }
