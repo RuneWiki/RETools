@@ -1,6 +1,5 @@
 package org.runewiki.deob.bytecode.remap;
 
-import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 import java.util.HashMap;
@@ -26,7 +25,7 @@ public class SimpleObfRemapper extends Remapper {
         var oldFqn = owner + "." + name + descriptor;
         var newName = this.mapping.getOrDefault(oldFqn, name);
         if (this.mapping.containsKey(owner)) {
-            var newFqn = this.mapping.get(owner) + "." + newName + descriptor;
+            var newFqn = this.map(owner) + "." + newName + this.mapDesc(descriptor);
             this.reverse.put(newFqn, oldFqn);
         }
         return newName;
@@ -37,7 +36,7 @@ public class SimpleObfRemapper extends Remapper {
         var oldFqn = owner + "." + name + descriptor;
         var newName = this.mapping.getOrDefault(oldFqn, name);
         if (this.mapping.containsKey(owner)) {
-            var newFqn = this.mapping.get(owner) + "." + newName + descriptor;
+            var newFqn = this.map(owner) + "." + newName + this.mapDesc(descriptor);
             this.reverse.put(newFqn, oldFqn);
         }
         return newName;

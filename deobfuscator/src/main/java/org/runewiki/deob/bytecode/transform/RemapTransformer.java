@@ -2,8 +2,6 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.commons.SimpleRemapper;
-import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
@@ -109,17 +107,18 @@ public class RemapTransformer extends Transformer {
             ex.printStackTrace();
         }
 
-        var mapper = new SimpleObfRemapper(remap);
+        var remapper = new SimpleObfRemapper(remap);
         var remappedClasses = new ArrayList<ClassNode>();
 
         for (var clazz : classes) {
             var remapped = new ClassNode();
-            clazz.accept(new ClassRemapper(remapped, mapper));
+            clazz.accept(new ClassRemapper(remapped, remapper));
             remappedClasses.add(remapped);
         }
 
         classes.clear();
         classes.addAll(remappedClasses);
+        moveStatics(classes, newOwners, remapper);
     }
 
     private static Map<String, Set<String>> computeLinkedFields(List<ClassNode> classes, Map<String, Set<String>> inheriting) {
@@ -226,6 +225,70 @@ public class RemapTransformer extends Transformer {
         for (var child : ts.getOrDefault(t, Set.of())) {
             if (!result.contains(child)) {
                 collectDescendants(ts, child, result);
+            }
+        }
+    }
+
+    // todo: move static initializers from <clinit> to new class
+    // todo: support inner classes
+    private static void moveStatics(List<ClassNode> classes, HashMap<String, String> newOwners, SimpleObfRemapper remapper) {
+        if (newOwners.isEmpty()) {
+            return;
+        }
+
+        var classesByName = new HashMap<String, ClassNode>();
+        for (var clazz : classes) {
+            classesByName.put(remapper.reverse.get(clazz.name), clazz);
+        }
+
+        // Move members
+        for (var clazz : classes) {
+            for (var field : new ArrayList<>(clazz.fields)) {
+                var fqn = remapper.reverse.get(clazz.name + "." + field.name + field.desc);
+
+                if (newOwners.containsKey(fqn)) {
+                    if ((field.access & Opcodes.ACC_STATIC) == 0) {
+                        throw new IllegalStateException("tried to move non-static field " + fqn);
+                    }
+
+                    clazz.fields.remove(field);
+                    classesByName.get(newOwners.get(fqn)).fields.add(field);
+                }
+            }
+
+            for (var method : new ArrayList<>(clazz.methods)) {
+                var fqn = remapper.reverse.get(clazz.name + "." + method.name + method.desc);
+
+                if (newOwners.containsKey(fqn)) {
+                    if ((method.access & Opcodes.ACC_STATIC) == 0) {
+                        throw new IllegalStateException("tried to move non-static method " + fqn);
+                    }
+
+                    clazz.methods.remove(method);
+                    classesByName.get(newOwners.get(fqn)).methods.add(method);
+                }
+            }
+        }
+
+        // Update references
+        for (var clazz : classes) {
+            for (var method : clazz.methods) {
+                for (var instruction : method.instructions) {
+                    if (instruction instanceof FieldInsnNode insn) {
+                        var fqn = remapper.reverse.get(insn.owner + "." + insn.name + insn.desc);
+
+                        if (newOwners.containsKey(fqn)) {
+                            var newOwner = classesByName.get(newOwners.get(fqn));
+                            insn.owner = newOwner.name;
+                        }
+                    } else if (instruction instanceof MethodInsnNode insn) {
+                        var fqn = remapper.reverse.get(insn.name + "." + insn.name + insn.desc);
+
+                        if (newOwners.containsKey(fqn)) {
+                            insn.owner = classesByName.get(newOwners.get(fqn)).name;
+                        }
+                    }
+                }
             }
         }
     }

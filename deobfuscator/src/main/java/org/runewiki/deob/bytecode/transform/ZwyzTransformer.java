@@ -1,6 +1,5 @@
 package org.runewiki.deob.bytecode.transform;
 
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.asm.transform.Transformer;
 import org.tomlj.TomlParseResult;
