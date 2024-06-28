@@ -1,9 +1,12 @@
 package org.runewiki.deob.ast.transform;
 
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
+import org.runewiki.deob.ast.util.NodeUtil;
 import org.tomlj.TomlParseResult;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class AstTransformer {
     protected TomlParseResult profile;
@@ -33,5 +36,9 @@ public class AstTransformer {
     }
 
     public void postTransform() {
+    }
+
+    protected static <T extends Node> void walk(CompilationUnit unit, Class<T> type, Consumer<T> consumer) {
+        NodeUtil.walk(unit, type, consumer);
     }
 }

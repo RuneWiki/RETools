@@ -7,31 +7,21 @@ import com.github.javaparser.ast.stmt.ExpressionStmt;
 import com.github.javaparser.ast.stmt.ForStmt;
 
 public class IncrementTransformer extends AstTransformer {
+
+    @Override
     public void transformUnit(CompilationUnit unit) {
-        unit.walk(stmt -> {
-            if (!(stmt instanceof ExpressionStmt exprStmt)) {
-                return;
-            }
+        walk(unit, ExpressionStmt.class, stmt -> {
+			if (stmt.getExpression() instanceof UnaryExpr unaryExpr) {
+				unaryExpr.setOperator(toPostfix(unaryExpr.getOperator()));
+			}
+		});
 
-            if (!(exprStmt.getExpression() instanceof UnaryExpr expr)) {
-                return;
-            }
-
-            expr.setOperator(toPostfix(expr.getOperator()));
-        });
-
-        unit.walk(stmt -> {
-            if (!(stmt instanceof ForStmt forStmt)) {
-                return;
-            }
-
+        walk(unit, ForStmt.class, forStmt -> {
             for (Expression expr : forStmt.getUpdate()) {
-                if (!(expr instanceof UnaryExpr unaryExpr)) {
-                    continue;
-                }
-
-                unaryExpr.setOperator(toPostfix(unaryExpr.getOperator()));
-            }
+				if (expr instanceof UnaryExpr unaryExpr) {
+					unaryExpr.setOperator(toPostfix(unaryExpr.getOperator()));
+				}
+			}
         });
     }
 
