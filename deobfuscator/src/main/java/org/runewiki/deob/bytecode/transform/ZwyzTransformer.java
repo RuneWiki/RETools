@@ -3,7 +3,10 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.asm.transform.Transformer;
 import org.tomlj.TomlParseResult;
-import zwyz.deob.*;
+import zwyz.deob.CalledMethods;
+import zwyz.deob.ErrorHandlers;
+import zwyz.deob.GotoDeobfuscator;
+import zwyz.deob.ParameterChecks;
 
 import java.util.HashSet;
 import java.util.List;
