@@ -5,10 +5,10 @@ import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
 import zwyz.deob.AsmUtil;
 
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
 import java.util.Objects;
-import java.util.ArrayDeque;
 
 public class ExpressionSorterTransformer extends Transformer {
     @Override

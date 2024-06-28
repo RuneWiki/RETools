@@ -31,6 +31,7 @@ public class BytecodeDeobfuscator {
         registerTransformer(new SortMethodsLineOrderTransformer());
         registerTransformer(new VariableSplitterTransformer());
         registerTransformer(new ExpressionSorterTransformer());
+        registerTransformer(new FernflowerExceptionTransformer());
     }
 
     private void registerTransformer(Transformer transformer) {
