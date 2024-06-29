@@ -5,12 +5,15 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.utils.SourceRoot;
 import org.runewiki.deob.ast.transform.*;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +61,16 @@ public class AstDeobfuscator {
         var solver = new CombinedTypeSolver();
         solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
         solver.add(new JavaParserTypeSolver(sources));
+
+        // todo: load semicolon-separated files into javaparser classpath (don't need to decompile)
+        try {
+            solver.add(new JarTypeSolver("stub.jar"));
+        } catch (IOException ignore) {
+        }
+        try {
+            solver.add(new JarTypeSolver("lib/stub.jar"));
+        } catch (IOException ignore) {
+        }
 
 		var config = new ParserConfiguration();
         config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
