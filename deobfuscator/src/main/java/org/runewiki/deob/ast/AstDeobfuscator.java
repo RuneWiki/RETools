@@ -59,17 +59,20 @@ public class AstDeobfuscator {
         String sources = this.profile.getString("profile.output_dir");
 
         var solver = new CombinedTypeSolver();
+
+        // todo: create stubs here for cases where JDKs don't provide the right types
+
         solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
         solver.add(new JavaParserTypeSolver(sources));
 
-        // todo: load semicolon-separated files into javaparser classpath (don't need to decompile)
-        try {
-            solver.add(new JarTypeSolver("stub.jar"));
-        } catch (IOException ignore) {
-        }
-        try {
-            solver.add(new JarTypeSolver("lib/stub.jar"));
-        } catch (IOException ignore) {
+        TomlArray classpath = this.profile.getArray("profile.classpath");
+        if (classpath != null) {
+            for (int i = 0; i < classpath.size(); i++) {
+                try {
+                    solver.add(new JarTypeSolver(classpath.getString(i)));
+                } catch (IOException ignore) {
+                }
+            }
         }
 
 		var config = new ParserConfiguration();
