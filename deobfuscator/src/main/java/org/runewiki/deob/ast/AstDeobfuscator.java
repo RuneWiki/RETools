@@ -60,11 +60,6 @@ public class AstDeobfuscator {
 
         var solver = new CombinedTypeSolver();
 
-        // todo: create stubs here for cases where JDKs don't provide the right types
-
-        solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
-        solver.add(new JavaParserTypeSolver(sources));
-
         TomlArray classpath = this.profile.getArray("profile.classpath");
         if (classpath != null) {
             for (int i = 0; i < classpath.size(); i++) {
@@ -74,6 +69,9 @@ public class AstDeobfuscator {
                 }
             }
         }
+
+        solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
+        solver.add(new JavaParserTypeSolver(sources));
 
 		var config = new ParserConfiguration();
         config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
