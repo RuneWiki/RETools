@@ -220,9 +220,9 @@ public class IfElseTransformer extends AstTransformer {
 					}
 
 					// replace
-					var thenBlock = new BlockStmt(new NodeList<>(new ReturnStmt(condExpr.getThenExpr())));
-					var elseBlock = new BlockStmt(new NodeList<>(new ReturnStmt(condExpr.getElseExpr())));
-					stmt.setElseStmt(new IfStmt(condExpr.getCondition(), thenBlock, elseBlock));
+					var thenBlock = new BlockStmt(new NodeList<>(new ReturnStmt(condExpr.getThenExpr().clone())));
+					var elseBlock = new BlockStmt(new NodeList<>(new ReturnStmt(condExpr.getElseExpr().clone())));
+					stmt.setElseStmt(new IfStmt(condExpr.getCondition().clone(), thenBlock, elseBlock));
 				});
 			});
 		});
@@ -256,8 +256,8 @@ public class IfElseTransformer extends AstTransformer {
 				return;
 			}
 
-			outerStmt.setCondition(new BinaryExpr(outerStmt.getCondition(), innerStmt.getCondition(), BinaryExpr.Operator.AND));
-			outerStmt.setThenStmt(innerStmt.getThenStmt());
+			outerStmt.setCondition(new BinaryExpr(outerStmt.getCondition().clone(), innerStmt.getCondition().clone(), BinaryExpr.Operator.AND));
+			outerStmt.setThenStmt(innerStmt.getThenStmt().clone());
 		});
 
 		walk(unit, MethodDeclaration.class, method -> {

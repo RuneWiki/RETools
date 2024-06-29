@@ -16,7 +16,7 @@ public class NegativeLiteralTransformer extends AstTransformer {
 				return;
 			}
 			switch (expr.getOperator()) {
-				case PLUS -> expr.replace(operand);
+				case PLUS -> expr.replace(operand.clone());
 				case MINUS -> expr.replace(negate(operand));
 			}
 		});
