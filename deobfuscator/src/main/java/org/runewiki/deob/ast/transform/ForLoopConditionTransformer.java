@@ -33,7 +33,7 @@ public class ForLoopConditionTransformer extends AstTransformer {
 				if (flipped == null) return;
 
 				if (!updatedExprs.contains(binaryExpr.getLeft()) && updatedExprs.contains(binaryExpr.getRight())) {
-					stmt.setCompare(new BinaryExpr(binaryExpr.getRight(), binaryExpr.getLeft(), flipped));
+					stmt.setCompare(new BinaryExpr(binaryExpr.getRight().clone(), binaryExpr.getLeft().clone(), flipped));
 				}
 			});
 		});

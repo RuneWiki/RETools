@@ -48,6 +48,7 @@ public class EncloseTransformer extends AstTransformer {
 				case CastExpr castExpr -> CAST_NEW;
 				case ObjectCreationExpr objectCreationExpr -> CAST_NEW;
 				case ArrayCreationExpr arrayCreationExpr -> CAST_NEW;
+
 				case BinaryExpr binaryExpr -> switch (binaryExpr.getOperator()) {
 					case BinaryExpr.Operator.MULTIPLY -> MULTIPLICATIVE;
 					case BinaryExpr.Operator.DIVIDE, BinaryExpr.Operator.REMAINDER -> MULTIPLICATIVE;
@@ -76,37 +77,33 @@ public class EncloseTransformer extends AstTransformer {
 	public void transformUnit(CompilationUnit unit) {
 		walk(unit, Expression.class, expr -> {
 			switch (expr) {
-				case ArrayAccessExpr arrayAccessExpr -> encloseLeft(expr, arrayAccessExpr.getName());
-				case FieldAccessExpr fieldAccessExpr -> encloseLeft(expr, fieldAccessExpr.getScope());
-				case MethodCallExpr methodCallExpr -> {
-					methodCallExpr.getScope().ifPresent(scope ->
-						encloseLeft(expr, scope)
-					);
-				}
+				case ArrayAccessExpr arrayAccessExpr -> encloseLeft(arrayAccessExpr, arrayAccessExpr.getName());
+				case FieldAccessExpr fieldAccessExpr -> encloseLeft(fieldAccessExpr, fieldAccessExpr.getScope());
+				case MethodCallExpr methodCallExpr ->
+					methodCallExpr.getScope().ifPresent(
+						scope -> encloseLeft(methodCallExpr, scope));
 
-				case UnaryExpr unaryExpr -> encloseRight(expr, unaryExpr.getExpression());
-				case CastExpr castExpr -> encloseRight(expr, castExpr.getExpression());
-				case ObjectCreationExpr objectCreationExpr -> {
-					objectCreationExpr.getScope().ifPresent(scope ->
-						encloseLeft(expr, scope)
-					);
-				}
+				case UnaryExpr unaryExpr -> encloseRight(unaryExpr, unaryExpr.getExpression());
+				case CastExpr castExpr -> encloseRight(castExpr, castExpr.getExpression());
+				case ObjectCreationExpr objectCreationExpr ->
+					objectCreationExpr.getScope().ifPresent(
+						scope -> encloseLeft(objectCreationExpr, scope));
 
 				case BinaryExpr binaryExpr -> {
-					encloseLeft(expr, binaryExpr.getLeft());
-					encloseRight(expr, binaryExpr.getRight());
+					encloseLeft(binaryExpr, binaryExpr.getLeft());
+					encloseRight(binaryExpr, binaryExpr.getRight());
 				}
 
-				case InstanceOfExpr instanceOfExpr -> encloseLeft(expr, instanceOfExpr.getExpression());
+				case InstanceOfExpr instanceOfExpr -> encloseLeft(instanceOfExpr, instanceOfExpr.getExpression());
 				case ConditionalExpr conditionalExpr -> {
-					encloseLeft(expr, conditionalExpr.getCondition());
-					encloseLeft(expr, conditionalExpr.getThenExpr());
-					encloseRight(expr, conditionalExpr.getElseExpr());
+					encloseLeft(conditionalExpr, conditionalExpr.getCondition());
+					encloseLeft(conditionalExpr, conditionalExpr.getThenExpr());
+					encloseRight(conditionalExpr, conditionalExpr.getElseExpr());
 				}
 
 				case AssignExpr assignExpr -> {
-					encloseLeft(expr, assignExpr.getTarget());
-					encloseRight(expr, assignExpr.getValue());
+					encloseLeft(assignExpr, assignExpr.getTarget());
+					encloseRight(assignExpr, assignExpr.getValue());
 				}
 
 				default -> {}
@@ -143,13 +140,13 @@ public class EncloseTransformer extends AstTransformer {
 		if (childOp == null) return;
 
 		switch (parentOp.associativity) {
-			case Associativity.NONE, Associativity.LEFT -> {
-				if (childOp.isPrecedenceLessEqual(parentOp)) {
+			case Associativity.RIGHT -> {
+				if (childOp.isPrecedenceLess(parentOp)) {
 					parent.replace(child, new EnclosedExpr(child.clone()));
 				}
 			}
-			case Associativity.RIGHT -> {
-				if (childOp.isPrecedenceLess(parentOp)) {
+			case Associativity.NONE, Associativity.LEFT -> {
+				if (childOp.isPrecedenceLessEqual(parentOp)) {
 					parent.replace(child, new EnclosedExpr(child.clone()));
 				}
 			}

@@ -8,42 +8,63 @@ public class IdentityTransformer extends AstTransformer {
 
 	@Override
 	public void transformUnit(CompilationUnit unit) {
+		walk(unit, UnaryExpr.class, expr -> {
+			switch (expr.getOperator()) {
+				case PLUS -> {
+					if (expr.getExpression() instanceof UnaryExpr inner) {
+						if (inner.getOperator() == UnaryExpr.Operator.PLUS) {
+							// +(+(...))
+							expr.replace(inner.getExpression().clone());
+						}
+					}
+				}
+				case MINUS -> {
+					if (expr.getExpression() instanceof UnaryExpr inner) {
+						if (inner.getOperator() == UnaryExpr.Operator.MINUS) {
+							// -(-(...))
+							expr.replace(inner.getExpression().clone());
+						}
+					}
+				}
+			}
+		});
+
 		walk(unit, BinaryExpr.class, expr -> {
 			switch (expr.getOperator()) {
 				case PLUS -> {
 					if (isZero(expr.getLeft())) {
 						// 0 + x => x
-						expr.replace(expr.getRight());
+						expr.replace(expr.getRight().clone());
 					} else if (isZero(expr.getRight())) {
 						// x + 0 => x
-						expr.replace(expr.getLeft());
+						expr.replace(expr.getLeft().clone());
 					}
 				}
 
 				case MINUS -> {
 					if (isZero(expr.getLeft())) {
 						// 0 - x => -x
-						expr.replace(new UnaryExpr(expr.getRight(), UnaryExpr.Operator.MINUS));
+						expr.replace(new UnaryExpr(expr.getRight().clone(), UnaryExpr.Operator.MINUS));
 					} else if (isZero(expr.getRight())) {
 						// x - 0 => x
-						expr.replace(expr.getLeft());
+						expr.replace(expr.getLeft().clone());
 					}
 				}
 
 				case MULTIPLY -> {
 					if (isOne(expr.getLeft())) {
 						// 1 * x => x
-						expr.replace(expr.getRight());
+						expr.replace(expr.getRight().clone());
 					} else if (isOne(expr.getRight())) {
 						// x * 1 => x
-						expr.replace(expr.getLeft());
+						expr.replace(expr.getLeft().clone());
 					}
 				}
 
 				case DIVIDE -> {
 					if (isOne(expr.getRight())) {
 						// x / 1 => x
-						expr.replace(expr.getLeft());
+						expr.replace(expr.getLeft().clone());
 					}
 				}
 			}
@@ -68,7 +89,7 @@ public class IdentityTransformer extends AstTransformer {
 				if (parent instanceof ExpressionStmt) {
 					parent.remove();
 				} else {
-					expr.replace(expr.getTarget());
+					expr.replace(expr.getTarget().clone());
 				}
 			});
 		});
