@@ -4,9 +4,12 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.expr.BinaryExpr;
+import com.github.javaparser.ast.expr.BooleanLiteralExpr;
 import com.github.javaparser.ast.expr.ConditionalExpr;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.type.VoidType;
+import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -435,15 +438,17 @@ public class IfElseTransformer extends AstTransformer {
 
 	private static Statement appendReturn(Statement stmt) {
 		if (stmt instanceof BlockStmt blockStmt) {
-			var last = blockStmt.getStatements().getLast().orElse(null);
-			if (last instanceof ReturnStmt || last instanceof ThrowStmt) {
+			var tail = blockStmt.getStatements().getLast().orElse(null);
+			if (tail instanceof ReturnStmt || tail instanceof ThrowStmt) {
 				return stmt.clone();
 			} else {
 				var list = new NodeList<Statement>();
 				for (var statement : blockStmt.getStatements()) {
 					list.add(statement.clone());
 				}
-				list.add(new ReturnStmt());
+				if (canAppend(tail)) {
+					list.add(new ReturnStmt());
+				}
 				return new BlockStmt(list);
 			}
 		} else if (stmt instanceof ReturnStmt || stmt instanceof ThrowStmt) {
@@ -451,6 +456,42 @@ public class IfElseTransformer extends AstTransformer {
 		} else {
 			return new BlockStmt(new NodeList<>(stmt.clone(), new ReturnStmt()));
 		}
+	}
+
+	private static boolean canAppend(Statement stmt) {
+		if (!isEndlessLoop(stmt)) {
+			return true;
+		}
+		var body = switch (stmt) {
+			case WhileStmt whileStmt -> whileStmt.getBody();
+			case DoStmt doStmt -> doStmt.getBody();
+			case ForStmt forStmt -> forStmt.getBody();
+			default -> throw new AssertionError();
+		};
+		ExitBranchVisitor visitor = new ExitBranchVisitor();
+		body.accept(visitor, null);
+		return visitor.hasExitBranch();
+	}
+
+	private static boolean isEndlessLoop(Statement stmt) {
+		return switch (stmt) {
+			case WhileStmt whileStmt
+					-> isTrue(whileStmt.getCondition());
+
+			case DoStmt doStmt
+					-> isTrue(doStmt.getCondition());
+
+			case ForStmt forStmt
+					-> forStmt.getCompare()
+					.map(IfElseTransformer::isTrue)
+					.orElse(false);
+
+			default -> false;
+		};
+	}
+
+	private static boolean isTrue(Expression condition) {
+		return condition instanceof BooleanLiteralExpr literal && literal.getValue();
 	}
 
 	private static Collection<Statement> flatten(Statement stmt) {
@@ -512,5 +553,42 @@ public class IfElseTransformer extends AstTransformer {
 			}
 			default -> false;
 		};
+	}
+
+	private static class ExitBranchVisitor extends VoidVisitorAdapter<Void> {
+		private boolean hasExitBranch = false;
+		private int loopDepth = 0;
+
+		@Override
+		public void visit(BreakStmt n, Void arg) {
+			if (loopDepth == 0) {
+				hasExitBranch = true;
+			}
+		}
+
+		@Override
+		public void visit(WhileStmt n, Void arg) {
+			loopDepth++;
+			super.visit(n, arg);
+			loopDepth--;
+		}
+
+		@Override
+		public void visit(ForStmt n, Void arg) {
+			loopDepth++;
+			super.visit(n, arg);
+			loopDepth--;
+		}
+
+		@Override
+		public void visit(DoStmt n, Void arg) {
+			loopDepth++;
+			super.visit(n, arg);
+			loopDepth--;
+		}
+
+		public boolean hasExitBranch() {
+			return hasExitBranch;
+		}
 	}
 }
