@@ -12,17 +12,9 @@ import java.util.List;
  * Add OpenRS2's OriginalClass and OriginalMember annotations to classes, fields, and methods
  */
 public class OriginalNameTransformer extends Transformer {
-    private String libraryAnnotation;
-
     @Override
     public void provide(TomlParseResult profile) {
         super.provide(profile);
-
-        this.libraryAnnotation = this.profile.getString("profile.original_name.library_annotation");
-        if (this.libraryAnnotation == null) {
-            // a sane default considering the context
-            this.libraryAnnotation = "client";
-        }
     }
 
     @Override
@@ -49,7 +41,7 @@ public class OriginalNameTransformer extends Transformer {
     @Override
     public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
         AnnotationVisitor annotation = clazz.visitAnnotation("Lorg.openrs2.deob.annotation.OriginalClass;", false);
-        annotation.visit("value", libraryAnnotation + "!" + clazz.name);
+        annotation.visit("value", clazz.name);
         annotation.visitEnd();
         return false;
     }
@@ -57,7 +49,7 @@ public class OriginalNameTransformer extends Transformer {
     @Override
     public boolean transformField(List<ClassNode> classes, ClassNode clazz, FieldNode field) {
         AnnotationVisitor annotation = field.visitAnnotation("Lorg.openrs2.deob.annotation.OriginalMember;", false);
-        annotation.visit("owner", libraryAnnotation + "!" + clazz.name);
+        annotation.visit("owner", clazz.name);
         annotation.visit("name", field.name);
         annotation.visit("descriptor", field.desc);
         annotation.visitEnd();
@@ -71,7 +63,7 @@ public class OriginalNameTransformer extends Transformer {
         }
 
         AnnotationVisitor annotation = method.visitAnnotation("Lorg.openrs2.deob.annotation.OriginalMember;", false);
-        annotation.visit("owner", libraryAnnotation + "!" + clazz.name);
+        annotation.visit("owner", clazz.name);
         annotation.visit("name", method.name);
         annotation.visit("descriptor", method.desc);
 
