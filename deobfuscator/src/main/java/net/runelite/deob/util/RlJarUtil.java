@@ -25,15 +25,14 @@
 package net.runelite.deob.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.ClassGroup;
 import net.runelite.asm.objectwebasm.NonloadingClassWriter;
@@ -45,133 +44,79 @@ import org.objectweb.asm.util.CheckClassAdapter;
 
 public class RlJarUtil
 {
-    public static ClassGroup load(File jarfile)
-    {
-        return load(jarfile, false);
-    }
+	public static ClassGroup loadJar(File jarfile) throws IOException
+	{
+		ClassGroup group = new ClassGroup();
 
-    public static ClassGroup load(File jarfile, boolean skip)
-    {
-        ClassGroup group = new ClassGroup();
+		try (JarFile jar = new JarFile(jarfile))
+		{
+			for (Enumeration<JarEntry> it = jar.entries(); it.hasMoreElements();)
+			{
+				JarEntry entry = it.nextElement();
 
-        try (JarFile jar = new JarFile(jarfile))
-        {
-            for (Enumeration<JarEntry> it = jar.entries(); it.hasMoreElements();)
-            {
-                JarEntry entry = it.nextElement();
+				if (!entry.getName().endsWith(".class"))
+				{
+					continue;
+				}
 
-                if (!entry.getName().endsWith(".class") || (skip && entry.getName().contains("bouncycastle")))
-                {
-                    continue;
-                }
+				InputStream is = jar.getInputStream(entry);
 
-                InputStream is = jar.getInputStream(entry);
+				ClassReader reader = new ClassReader(is);
+				ClassFileVisitor cv = new ClassFileVisitor();
 
-                ClassReader reader = new ClassReader(is);
-                ClassFileVisitor cv = new ClassFileVisitor();
+				reader.accept(cv, ClassReader.SKIP_FRAMES);
 
-                reader.accept(cv, ClassReader.SKIP_FRAMES);
+				group.addClass(cv.getClassFile());
+			}
+		}
 
-                group.addClass(cv.getClassFile());
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
+		group.initialize();
 
-        group.initialize();
+		return group;
+	}
 
-        return group;
-    }
+	public static void saveJar(ClassGroup group, File jarfile) throws IOException
+	{
+		try (JarOutputStream jout = new JarOutputStream(new FileOutputStream(jarfile), new Manifest()))
+		{
+			for (ClassFile cf : group.getClasses())
+			{
+				JarEntry entry = new JarEntry(cf.getName() + ".class");
+				jout.putNextEntry(entry);
 
-    public static ClassFile loadClass(byte[] bytes)
-    {
-        ClassReader reader = new ClassReader(bytes);
-        ClassFileVisitor cv = new ClassFileVisitor();
-        reader.accept(cv, ClassReader.SKIP_FRAMES);
-        return cv.getClassFile();
-    }
+				byte[] data = writeClass(group, cf);
 
-    public static ClassGroup loadClasses(Collection<File> files) throws IOException
-    {
-        return loadClasses(files, false);
-    }
+				jout.write(data);
+				jout.closeEntry();
+			}
+		}
+	}
 
-    public static ClassGroup loadClasses(Collection<File> files, boolean skip) throws IOException
-    {
-        final ClassGroup group = new ClassGroup();
+	public static byte[] writeClass(ClassGroup group, ClassFile cf)
+	{
+		ClassWriter writer = new NonloadingClassWriter(group, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
+//		CheckClassAdapter cca = new CheckClassAdapter(writer, false);
 
-        for (File file : files)
-        {
-            if (!file.getName().endsWith(".class") || (skip && file.getName().contains("bouncycastle")))
-            {
-                continue;
-            }
+		cf.accept(writer);
 
-            try (InputStream is = new FileInputStream(file))
-            {
-                ClassReader reader = new ClassReader(is);
-                ClassFileVisitor cv = new ClassFileVisitor();
+		byte[] data = writer.toByteArray();
 
-                reader.accept(cv, ClassReader.SKIP_FRAMES);
+//		validateDataFlow(cf.getName(), data);
 
-                group.addClass(cv.getClassFile());
-            }
-        }
+		return data;
+	}
 
-        group.initialize();
-
-        return group;
-    }
-
-    public static void save(ClassGroup group, File jarfile)
-    {
-        try (JarOutputStream jout = new JarOutputStream(new FileOutputStream(jarfile)))
-        {
-            for (ClassFile cf : group.getClasses())
-            {
-                JarEntry entry = new JarEntry(cf.getName() + ".class");
-                entry.setTime(-1);
-                jout.putNextEntry(entry);
-
-                byte[] data = writeClass(group, cf);
-
-                jout.write(data);
-                jout.closeEntry();
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    public static byte[] writeClass(ClassGroup group, ClassFile cf)
-    {
-        ClassWriter writer = new NonloadingClassWriter(group, ClassWriter.COMPUTE_FRAMES | ClassWriter.COMPUTE_MAXS);
-        CheckClassAdapter cca = new CheckClassAdapter(writer, false);
-
-        cf.accept(cca);
-
-        byte[] data = writer.toByteArray();
-
-        validateDataFlow(cf.getName(), data);
-
-        return data;
-    }
-
-    private static void validateDataFlow(String name, byte[] data)
-    {
-        try
-        {
-            ClassReader cr = new ClassReader(data);
-            ClassWriter cw = new ClassWriter(cr, 0);
-            ClassVisitor cv = new CheckClassAdapter(cw, true);
-            cr.accept(cv, 0);
-        }
-        catch (Exception ex)
-        {
-        }
-    }
+	private static void validateDataFlow(String name, byte[] data)
+	{
+		try
+		{
+			ClassReader cr = new ClassReader(data);
+			ClassWriter cw = new ClassWriter(cr, 0);
+			ClassVisitor cv = new CheckClassAdapter(cw, true);
+			cr.accept(cv, 0);
+		}
+		catch (Exception ex)
+		{
+		}
+	}
 }

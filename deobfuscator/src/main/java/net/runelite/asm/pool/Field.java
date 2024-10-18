@@ -25,14 +25,15 @@
 
 package net.runelite.asm.pool;
 
-import java.util.Objects;
 import net.runelite.asm.Type;
+
+import java.util.Objects;
 
 public class Field
 {
 	private final Class clazz;
 	private final String name;
-	private Type type;
+	private final Type type;
 
 	public Field(Class clazz, String name, Type type)
 	{
@@ -44,7 +45,7 @@ public class Field
 	@Override
 	public String toString()
 	{
-		return clazz.getName() + '.' + name + " " + type;
+		return "Field{" + "clazz=" + clazz + ", name=" + name + ", type=" + type + '}';
 	}
 
 	@Override
@@ -101,10 +102,5 @@ public class Field
 	public Type getType()
 	{
 		return type;
-	}
-
-	public void setType(Type type)
-	{
-		this.type = type;
 	}
 }

@@ -51,9 +51,9 @@ public class Deobfuscator {
 
                 if (Boolean.TRUE.equals(profile.getBoolean("profile.zwyz.math"))) {
                     System.out.println("zwyz: rl-math");
-                    ClassGroup group = RlJarUtil.load(new File(outputJar + "-deob.jar"), true);
+                    ClassGroup group = RlJarUtil.loadJar(new File(outputJar + "-deob.jar"));
                     Deob.runMath(group);
-                    RlJarUtil.save(group, new File(outputJar + "-nomultipliers.jar"));
+                    RlJarUtil.saveJar(group, new File(outputJar + "-nomultipliers.jar"));
 
                     System.out.println("zwyz: step 2");
                     ZwyzDeobStep2.run(Paths.get("mapping.txt"), Paths.get(outputJar + "-nomultipliers.jar"), Paths.get(outputJar + "-named.jar"), defaultPackage);

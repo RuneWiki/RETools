@@ -24,6 +24,7 @@
  */
 package net.runelite.asm.attributes.code.instructions;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import net.runelite.asm.ClassFile;
@@ -40,6 +41,7 @@ import net.runelite.asm.execution.InstructionContext;
 import net.runelite.asm.execution.Stack;
 import net.runelite.asm.execution.StackContext;
 import static net.runelite.asm.execution.StaticStep.stepInto;
+
 import net.runelite.asm.execution.Value;
 import net.runelite.asm.pool.Method;
 import net.runelite.asm.signature.Signature;
@@ -64,13 +66,6 @@ public class InvokeStatic extends Instruction implements InvokeInstruction
 		this.method = method;
 	}
 
-	public InvokeStatic(Instructions instructions, net.runelite.asm.Method method)
-	{
-		super(instructions, InstructionType.INVOKESTATIC);
-		this.method = method.getPoolMethod();
-		this.myMethod = method;
-	}
-
 	@Override
 	public void accept(MethodVisitor visitor)
 	{
@@ -88,10 +83,9 @@ public class InvokeStatic extends Instruction implements InvokeInstruction
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public List<net.runelite.asm.Method> getMethods()
 	{
-		return myMethod != null ? Collections.singletonList(myMethod) : Collections.EMPTY_LIST;
+		return myMethod != null ? Arrays.asList(myMethod) : Collections.EMPTY_LIST;
 	}
 
 	@Override

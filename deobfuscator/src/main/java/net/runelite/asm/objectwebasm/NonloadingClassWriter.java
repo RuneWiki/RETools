@@ -43,21 +43,8 @@ public class NonloadingClassWriter extends ClassWriter
 	@Override
 	protected String getCommonSuperClass(String type1, String type2)
 	{
-		// Checking more than this wouldn't make any sense
-		// Object has no super class, and RS api is guaranteed to be interfaces, which always extend from Object
-		// some rl api classes however ARE actual classes, so we can't just assume interface, for the slim chance
-		// we've got rl api on classpath. We could check all implemented interfaces in group, but that means you end up
-		// with Object as super class anyway, just like if you just let the Class.forName call throw.
-		// (maybe we could if we had a better package structure...)
-		if (type1.equals("java/lang/Object")
-			|| type2.equals("java/lang/Object")
-			|| type1.startsWith("net/runelite/rs/api/RS")
-			|| type2.startsWith("net/runelite/rs/api/RS")
-		)
-			return "java/lang/Object";
-
-		ClassFile cf1 = group.findClass(type1);
-		ClassFile cf2 = group.findClass(type2);
+		ClassFile cf1 = group.findClass(type1),
+			cf2 = group.findClass(type2);
 
 		if (cf1 == null && cf2 == null)
 		{
@@ -75,11 +62,10 @@ public class NonloadingClassWriter extends ClassWriter
 
 		if (cf1 != null && cf2 != null)
 		{
-			if (!(cf1.isInterface() || cf2.isInterface()))
-				for (ClassFile c = cf1; c != null; c = c.getParent())
-					for (ClassFile c2 = cf2; c2 != null; c2 = c2.getParent())
-						if (c == c2)
-							return c.getName();
+			for (ClassFile c = cf1; c != null; c = c.getParent())
+				for (ClassFile c2 = cf2; c2 != null; c2 = c2.getParent())
+					if (c == c2)
+						return c.getName();
 
 			return "java/lang/Object";
 		}
@@ -94,6 +80,7 @@ public class NonloadingClassWriter extends ClassWriter
 		}
 		else
 		{
+			assert cf2 == null;
 			found = cf1;
 			other = type2;
 		}
@@ -101,10 +88,17 @@ public class NonloadingClassWriter extends ClassWriter
 		ClassFile prev = null;
 
 		for (ClassFile c = found; c != null; c = c.getParent())
-			if ((prev = c).getSuperName().equals(other))
-				return other;
+		{
+			prev = c;
 
-		// This should pretty much never be hit, right?
+			if (c.getName().equals(other))
+				return other;
+		}
+
+		if (prev.getSuperName().equals("java/lang/Object") || other.equals("java/lang/Object")) {
+			return "java/lang/Object";
+		}
+
 		return super.getCommonSuperClass(prev.getSuperName(), other);
 	}
 }

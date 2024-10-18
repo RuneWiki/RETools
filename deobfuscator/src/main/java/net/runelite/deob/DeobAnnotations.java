@@ -24,15 +24,16 @@
  */
 package net.runelite.deob;
 
-import javax.annotation.Nullable;
-import net.runelite.asm.attributes.Annotated;
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Field;
 import net.runelite.asm.Method;
 import net.runelite.asm.Type;
-import net.runelite.asm.Annotation;
+import net.runelite.asm.attributes.Annotations;
+import net.runelite.asm.attributes.annotation.Annotation;
+import net.runelite.asm.attributes.annotation.Element;
 import net.runelite.asm.signature.Signature;
-import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class DeobAnnotations
 {
@@ -41,35 +42,103 @@ public class DeobAnnotations
 	public static final Type IMPLEMENTS = new Type("Lnet/runelite/mapping/Implements;");
 	public static final Type OBFUSCATED_GETTER = new Type("Lnet/runelite/mapping/ObfuscatedGetter;");
 	public static final Type OBFUSCATED_SIGNATURE = new Type("Lnet/runelite/mapping/ObfuscatedSignature;");
+	public static final Type HOOK = new Type("Lnet/runelite/mapping/Hook;");
 
-	@Nullable
-	public static String getObfuscatedName(@NotNull Annotated an)
+	public static Signature getObfuscatedSignature(Method m)
 	{
-		return getStringValue(an, OBFUSCATED_NAME);
+		String str = getAnnotationValue(m.getAnnotations(), OBFUSCATED_SIGNATURE);
+
+		if (str == null)
+		{
+			return null;
+		}
+
+		return new Signature(str);
 	}
 
-	@Nullable
-	public static String getExportedName(@NotNull Annotated an)
+	public static Type getObfuscatedType(Field f)
 	{
-		return getStringValue(an, EXPORT);
+		String str = getAnnotationValue(f.getAnnotations(), OBFUSCATED_SIGNATURE);
+
+		if (str == null)
+		{
+			return null;
+		}
+
+		return new Type(str);
 	}
 
-	@Nullable
-	public static Object get(Annotated an, Type type, String name)
+	public static String getObfuscatedName(Annotations an)
 	{
-		final var a = an.findAnnotation(type);
-		return a == null ? null : a.get(name);
+		return getAnnotationValue(an, OBFUSCATED_NAME);
 	}
 
-	@Nullable
-	public static String getStringValue(Annotated an, Type type)
+	public static String getExportedName(Annotations an)
 	{
-		final var a = an.findAnnotation(type);
-		return a == null ? null : a.getValueString();
+		return getAnnotationValue(an, EXPORT);
 	}
 
-	public static String flatten(String className)
+	public static String getImplements(ClassFile cf)
 	{
-		return className.substring(className.lastIndexOf('/') + 1);
+		return getAnnotationValue(cf.getAnnotations(), IMPLEMENTS);
+	}
+
+	public static String getHookName(Annotations an)
+	{
+		return getAnnotationValue(an, HOOK);
+	}
+
+	public static Number getObfuscatedGetter(Field field)
+	{
+		if (field == null || field.getAnnotations() == null)
+		{
+			return null;
+		}
+
+		Annotation an = field.getAnnotations().find(OBFUSCATED_GETTER);
+		if (an == null)
+		{
+			return null;
+		}
+		
+		return (Number) an.getElement().getValue();
+	}
+
+	public static String getObfuscatedValue(Method method)
+	{
+		if (method == null || method.getAnnotations() == null)
+		{
+			return null;
+		}
+
+		Annotation an = method.getAnnotations().find(OBFUSCATED_SIGNATURE);
+		if (an == null)
+		{
+			return null;
+		}
+
+		List<Element> elements = an.getElements();
+		if (elements == null || elements.size() < 2)
+		{
+			return null;
+		}
+
+		return (String) elements.get(1).getValue();
+	}
+
+	private static String getAnnotationValue(Annotations an, Type type)
+	{
+		if (an == null)
+		{
+			return null;
+		}
+
+		Annotation a = an.find(type);
+		if (a == null)
+		{
+			return null;
+		}
+
+		return a.getElement().getString();
 	}
 }

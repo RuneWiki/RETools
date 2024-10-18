@@ -260,7 +260,8 @@ public class Frame
 				}
 				System.err.println("end of stack");
 				ex.printStackTrace();
-				throw ex;
+				return;
+//				throw ex;
 			}
 
 			assert ictx.getInstruction() == oldCur;

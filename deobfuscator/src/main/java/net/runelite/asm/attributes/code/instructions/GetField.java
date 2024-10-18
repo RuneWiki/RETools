@@ -56,13 +56,6 @@ public class GetField extends Instruction implements GetFieldInstruction
 		this.field = field;
 	}
 
-	public GetField(Instructions instructions, net.runelite.asm.Field field)
-	{
-		super(instructions, InstructionType.GETFIELD);
-		this.field = field.getPoolField();
-		this.myField = field;
-	}
-
 	@Override
 	public String toString()
 	{

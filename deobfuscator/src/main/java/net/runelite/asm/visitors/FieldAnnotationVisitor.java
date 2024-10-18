@@ -22,62 +22,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.asm.execution;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.util.Collection;
-import net.runelite.asm.Method;
-import net.runelite.asm.attributes.code.Instruction;
+package net.runelite.asm.visitors;
 
-public class MethodContext
+import net.runelite.asm.Field;
+import net.runelite.asm.Type;
+import net.runelite.asm.attributes.annotation.Annotation;
+import net.runelite.asm.attributes.annotation.Element;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Opcodes;
+
+public class FieldAnnotationVisitor extends AnnotationVisitor
 {
-	private Execution execution;
-	private Method method;
-	private Multimap<InstructionContext, Instruction> visited = HashMultimap.create();
-	public Multimap<Instruction, InstructionContext> contexts = HashMultimap.create();
-
-	public MethodContext(Execution execution, Method method)
+	private final Field field;
+	private final Type type;
+	private final Annotation annotation;
+	
+	public FieldAnnotationVisitor(Field field, Type type)
 	{
-		this.execution = execution;
-		this.method = method;
+		super(Opcodes.ASM5);
+		
+		this.field = field;
+		this.type = type;
+		
+		annotation = new Annotation(field.getAnnotations());
+		annotation.setType(type);
+	}
+	
+	@Override
+	public void visit(String name, Object value)
+	{
+		Element element = new Element(annotation);
+		
+		element.setName(name);
+		element.setValue(value);
+		
+		annotation.addElement(element);
 	}
 
-	public Execution getExecution()
+	@Override
+	public void visitEnd()
 	{
-		return execution;
-	}
-
-	public Method getMethod()
-	{
-		return method;
-	}
-
-	protected boolean hasJumped(InstructionContext from, Instruction to)
-	{
-		Collection<Instruction> i = visited.get(from);
-		if (i != null && i.contains(to))
-		{
-			return true;
-		}
-
-		visited.put(from, to);
-		return false;
-	}
-
-	public Collection<InstructionContext> getInstructonContexts(Instruction i)
-	{
-		return contexts.get(i);
-	}
-
-	public Collection<InstructionContext> getInstructionContexts()
-	{
-		return (Collection) contexts.values();
-	}
-
-	public void reset()
-	{
-		contexts.clear();
-		visited.clear();
+		field.getAnnotations().addAnnotation(annotation);
 	}
 }

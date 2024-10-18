@@ -22,62 +22,61 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.asm.execution;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.util.Collection;
-import net.runelite.asm.Method;
-import net.runelite.asm.attributes.code.Instruction;
+package net.runelite.asm.attributes.annotation;
 
-public class MethodContext
+import java.util.ArrayList;
+import java.util.List;
+
+import net.runelite.asm.Type;
+import net.runelite.asm.attributes.Annotations;
+import org.objectweb.asm.AnnotationVisitor;
+
+public class Annotation
 {
-	private Execution execution;
-	private Method method;
-	private Multimap<InstructionContext, Instruction> visited = HashMultimap.create();
-	public Multimap<Instruction, InstructionContext> contexts = HashMultimap.create();
+	private final Annotations annotations;
+	private Type type;
+	private final List<Element> elements = new ArrayList<>();
 
-	public MethodContext(Execution execution, Method method)
+	public Annotation(Annotations annotations)
 	{
-		this.execution = execution;
-		this.method = method;
+		this.annotations = annotations;
 	}
 
-	public Execution getExecution()
+	public Annotations getAnnotations()
 	{
-		return execution;
+		return annotations;
 	}
 
-	public Method getMethod()
+	public void setType(Type type)
 	{
-		return method;
+		this.type = type;
 	}
 
-	protected boolean hasJumped(InstructionContext from, Instruction to)
+	public Type getType()
 	{
-		Collection<Instruction> i = visited.get(from);
-		if (i != null && i.contains(to))
-		{
-			return true;
-		}
-
-		visited.put(from, to);
-		return false;
+		return type;
 	}
 
-	public Collection<InstructionContext> getInstructonContexts(Instruction i)
+	public List<Element> getElements()
 	{
-		return contexts.get(i);
+		return elements;
 	}
-
-	public Collection<InstructionContext> getInstructionContexts()
+	
+	public Element getElement()
 	{
-		return (Collection) contexts.values();
+		return elements.get(0);
 	}
-
-	public void reset()
+	
+	public void addElement(Element element)
 	{
-		contexts.clear();
-		visited.clear();
+		elements.add(element);
+	}
+	
+	public void accept(AnnotationVisitor visitor)
+	{
+		for (Element element : elements)
+			visitor.visit(element.getName(), element.getValue());
+		visitor.visitEnd();
 	}
 }

@@ -25,19 +25,17 @@
 package net.runelite.asm;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import lombok.Getter;
-import net.runelite.asm.attributes.Annotated;
+import net.runelite.asm.attributes.Annotations;
 import net.runelite.asm.attributes.Code;
 import net.runelite.asm.attributes.Exceptions;
+import net.runelite.asm.attributes.annotation.Annotation;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.LocalVariable;
 import net.runelite.asm.attributes.code.Parameter;
 import net.runelite.asm.attributes.code.instruction.types.LVTInstruction;
 import net.runelite.asm.signature.Signature;
-import net.runelite.deob.DeobAnnotations;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
@@ -48,7 +46,7 @@ import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 import static org.objectweb.asm.Opcodes.ACC_SYNCHRONIZED;
 
-public class Method implements Annotated, Named
+public class Method
 {
 	public static final int ACCESS_MODIFIERS = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
 
@@ -57,9 +55,8 @@ public class Method implements Annotated, Named
 	private int accessFlags;
 	private String name;
 	private Signature arguments;
-	private final Exceptions exceptions;
-	@Getter
-	private final Map<Type, Annotation> annotations = new LinkedHashMap<>();
+	private Exceptions exceptions;
+	private Annotations annotations;
 	private List<Parameter> parameters;
 	private Code code;
 
@@ -69,6 +66,7 @@ public class Method implements Annotated, Named
 		this.name = name;
 		this.arguments = signature;
 		exceptions = new Exceptions();
+		annotations = new Annotations();
 		parameters = new ArrayList<>();
 	}
 
@@ -91,9 +89,10 @@ public class Method implements Annotated, Named
 			visitor.visitParameter(p.getName(), p.getAccess());
 		}
 
-		for (Annotation annotation : annotations.values())
+		for (Annotation annotation : annotations.getAnnotations())
 		{
-			annotation.accept(visitor.visitAnnotation(annotation.getType().toString(), true));
+			AnnotationVisitor av = visitor.visitAnnotation(annotation.getType().toString(), true);
+			annotation.accept(av);
 		}
 
 		if (code != null)
@@ -204,16 +203,9 @@ public class Method implements Annotated, Named
 		return (accessFlags & ACC_STATIC) != 0;
 	}
 
-	public void setStatic(boolean s)
+	public void setStatic()
 	{
-		if (s)
-		{
-			accessFlags |= ACC_STATIC;
-		}
-		else
-		{
-			accessFlags &= ~ACC_STATIC;
-		}
+		accessFlags |= ACC_STATIC;
 	}
 
 	public boolean isSynchronized()
@@ -268,6 +260,11 @@ public class Method implements Annotated, Named
 		this.code = code;
 	}
 
+	public Annotations getAnnotations()
+	{
+		return annotations;
+	}
+
 	@SuppressWarnings("unchecked")
 	public <T extends Instruction & LVTInstruction> List<T> findLVTInstructionsForVariable(int index)
 	{
@@ -299,7 +296,7 @@ public class Method implements Annotated, Named
 	public net.runelite.asm.pool.Method getPoolMethod()
 	{
 		return new net.runelite.asm.pool.Method(
-			classFile.getPoolClass(),
+			new net.runelite.asm.pool.Class(classFile.getName()),
 			name,
 			arguments
 		);

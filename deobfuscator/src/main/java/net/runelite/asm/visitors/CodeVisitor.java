@@ -32,7 +32,6 @@ import net.runelite.asm.ClassFile;
 import net.runelite.asm.Method;
 import net.runelite.asm.Type;
 import net.runelite.asm.attributes.Code;
-import net.runelite.asm.Annotation;
 import net.runelite.asm.attributes.code.Exceptions;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.InstructionType;
@@ -80,7 +79,7 @@ public class CodeVisitor extends MethodVisitor
 	private final Method method;
 	private Code code;
 
-	CodeVisitor(ClassFile classFile, int access, String name, Signature signature, String[] sexceptions)
+	public CodeVisitor(ClassFile classFile, int access, String name, Signature signature, String[] sexceptions)
 	{
 		super(Opcodes.ASM5);
 
@@ -108,9 +107,8 @@ public class CodeVisitor extends MethodVisitor
 	@Override
 	public AnnotationVisitor visitAnnotation(String desc, boolean visible)
 	{
-		Annotation annotation = new Annotation(new Type(desc), visible);
-		this.method.addAnnotation(annotation);
-		return annotation;
+		Type type = new Type(desc);
+		return new MethodAnnotationVisitor(method, type);
 	}
 
 	@Override
@@ -331,7 +329,7 @@ public class CodeVisitor extends MethodVisitor
 		if (cst instanceof org.objectweb.asm.Type)
 		{
 			org.objectweb.asm.Type t = (org.objectweb.asm.Type) cst;
-			entry = new net.runelite.asm.pool.Class(t.getClassName());
+			entry = new net.runelite.asm.pool.Class((String) t.getClassName());
 		}
 
 		LDC ldc = new LDC(code.getInstructions(), entry);

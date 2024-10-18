@@ -109,11 +109,6 @@ public class Label extends NOP
 		this.lineNumber = lineNumber;
 	}
 
-	public Integer getLineNumber()
-	{
-		return this.lineNumber;
-	}
-
 	public Instruction next()
 	{
 		Instructions ins = this.getInstructions();

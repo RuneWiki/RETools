@@ -22,62 +22,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.asm.execution;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.util.Collection;
-import net.runelite.asm.Method;
-import net.runelite.asm.attributes.code.Instruction;
+package net.runelite.asm.attributes.annotation;
 
-public class MethodContext
+public class Element
 {
-	private Execution execution;
-	private Method method;
-	private Multimap<InstructionContext, Instruction> visited = HashMultimap.create();
-	public Multimap<Instruction, InstructionContext> contexts = HashMultimap.create();
-
-	public MethodContext(Execution execution, Method method)
+	private final Annotation annotation;
+	private String name;
+	private Object value;
+	
+	public Element(Annotation annotation)
 	{
-		this.execution = execution;
-		this.method = method;
+		this.annotation = annotation;
 	}
 
-	public Execution getExecution()
+	public Annotation getAnnotation()
 	{
-		return execution;
+		return annotation;
 	}
 
-	public Method getMethod()
+	public String getName()
 	{
-		return method;
+		return name;
 	}
 
-	protected boolean hasJumped(InstructionContext from, Instruction to)
+	public void setName(String name)
 	{
-		Collection<Instruction> i = visited.get(from);
-		if (i != null && i.contains(to))
-		{
-			return true;
-		}
-
-		visited.put(from, to);
-		return false;
+		this.name = name;
 	}
 
-	public Collection<InstructionContext> getInstructonContexts(Instruction i)
+	public Object getValue()
 	{
-		return contexts.get(i);
+		return value;
 	}
 
-	public Collection<InstructionContext> getInstructionContexts()
+	public void setValue(Object value)
 	{
-		return (Collection) contexts.values();
+		this.value = value;
 	}
-
-	public void reset()
+	
+	public String getString()
 	{
-		contexts.clear();
-		visited.clear();
+		return value.toString();
 	}
 }

@@ -30,52 +30,40 @@ import net.runelite.deob.deobfuscators.arithmetic.MultiplicationDeobfuscator;
 import net.runelite.deob.deobfuscators.arithmetic.MultiplyOneDeobfuscator;
 import net.runelite.deob.deobfuscators.arithmetic.MultiplyZeroDeobfuscator;
 
-public class Deob
-{
-	public static final int OBFUSCATED_NAME_MAX_LEN = 3;
+import java.io.File;
+import java.io.IOException;
 
-	public static boolean isObfuscated(String name)
-	{
-		if (name.length() <= OBFUSCATED_NAME_MAX_LEN)
-		{
-			return !name.equals("run") && !name.equals("add");
-		}
-		return name.startsWith("method")
-				|| name.startsWith("vmethod")
-				|| name.startsWith("field")
-				|| name.startsWith("class")
-				|| name.startsWith("__");
-	}
+public class Deob {
+    public static final int OBFUSCATED_NAME_MAX_LEN = 2;
 
-	public static void runMath(ClassGroup group)
-	{
-		new MultiplyOneDeobfuscator(false).run(group);
+    public static boolean isObfuscated(String name) {
+        return name.length() <= OBFUSCATED_NAME_MAX_LEN || name.startsWith("method") || name.startsWith("vmethod") || name.startsWith("field") || name.startsWith("class");
+    }
 
-		ModArith mod = new ModArith();
-		mod.run(group);
+    public static void runMath(ClassGroup group) {
+        new MultiplyOneDeobfuscator(false).run(group); // changed: intentionally removing early
 
-		int last = -1, cur;
-		while ((cur = mod.runOnce()) > 0)
-		{
-			new MultiplicationDeobfuscator().run(group);
+        ModArith mod = new ModArith();
+        mod.run(group);
 
-			// do not remove 1 * field so that ModArith can detect
-			// the change in guessDecreasesConstants()
-			new MultiplyOneDeobfuscator(true).run(group);
+        int last = -1, cur;
+        while ((cur = mod.runOnce()) > 0) {
+            new MultiplicationDeobfuscator().run(group);
 
-			new MultiplyZeroDeobfuscator().run(group);
+            // do not remove 1 * field so that ModArith can detect
+            // the change in guessDecreasesConstants()
+            new MultiplyOneDeobfuscator(true).run(group);
+            new MultiplyZeroDeobfuscator().run(group);
 
-			if (last == cur)
-			{
-				break;
-			}
+            if (last == cur) {
+                break;
+            }
 
-			last = cur;
-		}
+            last = cur;
+        }
 
-		// now that modarith is done, remove field * 1
-		new MultiplyOneDeobfuscator(false).run(group);
-
-		mod.annotateEncryption();
-	}
+        // now that modarith is done, remove field * 1
+        new MultiplyOneDeobfuscator(false).run(group);
+        mod.annotateEncryption();
+    }
 }

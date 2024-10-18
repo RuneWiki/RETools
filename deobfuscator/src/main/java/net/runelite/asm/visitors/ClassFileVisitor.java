@@ -27,7 +27,6 @@ package net.runelite.asm.visitors;
 
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Type;
-import net.runelite.asm.Annotation;
 import net.runelite.asm.signature.Signature;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -41,7 +40,7 @@ public class ClassFileVisitor extends ClassVisitor
 
 	public ClassFileVisitor()
 	{
-		super(Opcodes.ASM5);
+		super(Opcodes.ASM7);
 	}
 
 	public ClassFile getClassFile()
@@ -56,7 +55,7 @@ public class ClassFileVisitor extends ClassVisitor
 		classFile.setSuperName(superName);
 		classFile.setVersion(version);
 		classFile.setAccess(access);
-
+		
 		for (String inter : interfaces)
 			classFile.getInterfaces().addInterface(new net.runelite.asm.pool.Class(inter));
 	}
@@ -70,9 +69,8 @@ public class ClassFileVisitor extends ClassVisitor
 	@Override
 	public AnnotationVisitor visitAnnotation(String desc, boolean visible)
 	{
-		Annotation annotation = new Annotation(new Type(desc));
-		classFile.addAnnotation(annotation);
-		return annotation;
+		Type type = new Type(desc);
+		return new ClassAnnotationVisitor(classFile, type);
 	}
 
 	@Override

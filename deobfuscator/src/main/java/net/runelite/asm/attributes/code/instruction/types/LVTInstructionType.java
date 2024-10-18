@@ -34,7 +34,7 @@ public enum LVTInstructionType
 
 	private final int slots;
 
-	LVTInstructionType(int slots)
+	private LVTInstructionType(int slots)
 	{
 		this.slots = slots;
 	}

@@ -42,11 +42,6 @@ public class AALoad extends Instruction implements ArrayLoad
 		super(instructions, type);
 	}
 
-	public AALoad(Instructions instructions)
-	{
-		super(instructions, InstructionType.AALOAD);
-	}
-
 	@Override
 	public InstructionContext execute(Frame frame)
 	{

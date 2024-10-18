@@ -30,15 +30,8 @@ public class DMath
 {
 	public static BigInteger modInverse(BigInteger val, int bits)
 	{
-		try
-		{
-			BigInteger shift = BigInteger.ONE.shiftLeft(bits);
-			return val.modInverse(shift);
-		}
-		catch (ArithmeticException e)
-		{
-			return val;
-		}
+		BigInteger shift = BigInteger.ONE.shiftLeft(bits);
+		return val.modInverse(shift);
 	}
 
 	public static int modInverse(int val)

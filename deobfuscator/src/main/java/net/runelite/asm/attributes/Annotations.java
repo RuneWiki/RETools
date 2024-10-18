@@ -22,62 +22,64 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.asm.execution;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.util.Collection;
-import net.runelite.asm.Method;
-import net.runelite.asm.attributes.code.Instruction;
+package net.runelite.asm.attributes;
 
-public class MethodContext
+import java.util.ArrayList;
+import java.util.List;
+
+import net.runelite.asm.Type;
+import net.runelite.asm.attributes.annotation.Annotation;
+import net.runelite.asm.attributes.annotation.Element;
+
+public class Annotations
 {
-	private Execution execution;
-	private Method method;
-	private Multimap<InstructionContext, Instruction> visited = HashMultimap.create();
-	public Multimap<Instruction, InstructionContext> contexts = HashMultimap.create();
+	private final List<Annotation> annotations = new ArrayList<>();
 
-	public MethodContext(Execution execution, Method method)
+	public List<Annotation> getAnnotations()
 	{
-		this.execution = execution;
-		this.method = method;
+		return annotations;
+	}
+	
+	public void addAnnotation(Annotation annotation)
+	{
+		annotations.add(annotation);
 	}
 
-	public Execution getExecution()
+	public void removeAnnotation(Annotation annotation)
 	{
-		return execution;
+		annotations.remove(annotation);
 	}
 
-	public Method getMethod()
+	public void clearAnnotations()
 	{
-		return method;
+		annotations.clear();
+	}
+	
+	public Annotation find(Type type)
+	{
+		for (Annotation a : annotations)
+			if (a.getType().equals(type))
+				return a;
+		return null;
 	}
 
-	protected boolean hasJumped(InstructionContext from, Instruction to)
+	public int size()
 	{
-		Collection<Instruction> i = visited.get(from);
-		if (i != null && i.contains(to))
-		{
-			return true;
-		}
-
-		visited.put(from, to);
-		return false;
+		return annotations.size();
 	}
-
-	public Collection<InstructionContext> getInstructonContexts(Instruction i)
+	
+	public Annotation addAnnotation(Type type, String name, Object value)
 	{
-		return contexts.get(i);
-	}
+		Annotation annotation = new Annotation(this);
+		annotation.setType(type);
+		addAnnotation(annotation);
+		
+		Element element = new Element(annotation);
+		element.setName(name);
+		element.setValue(value);
+		annotation.addElement(element);
 
-	public Collection<InstructionContext> getInstructionContexts()
-	{
-		return (Collection) contexts.values();
-	}
-
-	public void reset()
-	{
-		contexts.clear();
-		visited.clear();
+		return annotation;
 	}
 }

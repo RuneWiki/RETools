@@ -64,13 +64,6 @@ public class InvokeSpecial extends Instruction implements InvokeInstruction
 		this.method = method;
 	}
 
-	public InvokeSpecial(Instructions instructions, net.runelite.asm.Method method)
-	{
-		super(instructions, InstructionType.INVOKESPECIAL);
-		this.method = method.getPoolMethod();
-		this.myMethod = method;
-	}
-
 	@Override
 	public void accept(MethodVisitor visitor)
 	{
@@ -82,7 +75,6 @@ public class InvokeSpecial extends Instruction implements InvokeInstruction
 	}
 
 	@Override
-	@SuppressWarnings("unchecked")
 	public List<net.runelite.asm.Method> getMethods()
 	{
 		return myMethod != null ? Arrays.asList(myMethod) : Collections.EMPTY_LIST;

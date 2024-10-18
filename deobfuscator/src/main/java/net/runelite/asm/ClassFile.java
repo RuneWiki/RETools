@@ -25,20 +25,18 @@
 package net.runelite.asm;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import lombok.Getter;
-import net.runelite.asm.attributes.Annotated;
+import net.runelite.asm.attributes.Annotations;
+import net.runelite.asm.attributes.annotation.Annotation;
 import net.runelite.asm.pool.Class;
 import net.runelite.asm.signature.Signature;
-import static net.runelite.deob.DeobAnnotations.*;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-public class ClassFile implements Annotated, Named
+public class ClassFile
 {
 	private ClassGroup group;
 
@@ -53,14 +51,14 @@ public class ClassFile implements Annotated, Named
 	private final Interfaces interfaces;
 	private final List<Field> fields = new ArrayList<>();
 	private final List<Method> methods = new ArrayList<>();
-	@Getter
-	private final Map<Type, Annotation> annotations = new LinkedHashMap<>();
+	private final Annotations annotations;
 
 	public ClassFile(ClassGroup group)
 	{
 		this.group = group;
 
 		interfaces = new Interfaces(this);
+		annotations = new Annotations();
 	}
 
 	public ClassFile()
@@ -96,14 +94,15 @@ public class ClassFile implements Annotated, Named
 
 	public void accept(ClassVisitor visitor)
 	{
-		String[] ints = interfaces.getInterfaces().stream().map(Class::getName).toArray(String[]::new);
+		String[] ints = interfaces.getInterfaces().stream().map(i -> i.getName()).toArray(String[]::new);
 
 		visitor.visit(version, access, name.getName(), null, super_class.getName(), ints);
 		visitor.visitSource(source, null);
 
-		for (Annotation annotation : annotations.values())
+		for (Annotation annotation : annotations.getAnnotations())
 		{
-			annotation.accept(visitor.visitAnnotation(annotation.getType().toString(), true));
+			AnnotationVisitor av = visitor.visitAnnotation(annotation.getType().toString(), true);
+			annotation.accept(av);
 		}
 
 		for (Field field : fields)
@@ -114,7 +113,7 @@ public class ClassFile implements Annotated, Named
 
 		for (Method method : methods)
 		{
-			String[] exceptions = method.getExceptions().getExceptions().stream().map(Class::getName).toArray(String[]::new);
+			String[] exceptions = method.getExceptions().getExceptions().stream().map(cl -> cl.getName()).toArray(String[]::new);
 			if (exceptions.length == 0)
 			{
 				exceptions = null;
@@ -170,6 +169,11 @@ public class ClassFile implements Annotated, Named
 	public void removeMethod(Method method)
 	{
 		methods.remove(method);
+	}
+
+	public Annotations getAnnotations()
+	{
+		return annotations;
 	}
 
 	public String getName()
@@ -290,37 +294,11 @@ public class ClassFile implements Annotated, Named
 		return null;
 	}
 
-	public Method findStaticMethod(String name, Signature type)
-	{
-		for (Method m : methods)
-		{
-			if (m.isStatic() &&
-				m.getName().equals(name) &&
-				m.getDescriptor().equals(type))
-			{
-				return m;
-			}
-		}
-		return null;
-	}
-
 	public Method findMethod(String name)
 	{
 		for (Method m : methods)
 		{
 			if (m.getName().equals(name))
-			{
-				return m;
-			}
-		}
-		return null;
-	}
-
-	public Method findStaticMethod(String name)
-	{
-		for (Method m : methods)
-		{
-			if (m.isStatic() && m.getName().equals(name))
 			{
 				return m;
 			}
@@ -347,8 +325,8 @@ public class ClassFile implements Annotated, Named
 
 	public Method findMethodDeepStatic(String name, Signature type)
 	{
-		Method m = findStaticMethod(name, type);
-		if (m != null)
+		Method m = findMethod(name, type);
+		if (m != null && m.isStatic())
 		{
 			return m;
 		}

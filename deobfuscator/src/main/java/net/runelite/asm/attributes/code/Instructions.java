@@ -26,14 +26,11 @@ package net.runelite.asm.attributes.code;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import net.runelite.asm.attributes.Code;
-import org.jetbrains.annotations.NotNull;
 
-public class Instructions implements Iterable<Instruction>
+public class Instructions
 {
 	private final Code code;
 	private final List<Instruction> instructions = new ArrayList<>();
@@ -188,26 +185,5 @@ public class Instructions implements Iterable<Instruction>
 		instructions.add(i, newi);
 
 		return i;
-	}
-
-	public int size()
-	{
-		return this.instructions.size();
-	}
-
-	@NotNull
-	public Iterator<Instruction> iterator()
-	{
-		return this.instructions.iterator();
-	}
-
-	public ListIterator<Instruction> listIterator()
-	{
-		return this.instructions.listIterator();
-	}
-
-	public ListIterator<Instruction> listIterator(int i)
-	{
-		return this.instructions.listIterator(i);
 	}
 }

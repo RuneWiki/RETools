@@ -50,67 +50,69 @@ import net.runelite.asm.execution.Variables;
 import net.runelite.asm.signature.Signature;
 
 public class MappingExecutorUtil
-{
+{	
 	public static ParallelExecutorMapping map(Method m1, Method m2)
 	{
-		ClassGroup group1 = m1.getClassFile().getGroup();
-		ClassGroup group2 = m2.getClassFile().getGroup();
+			ClassGroup group1 = m1.getClassFile().getGroup();
+			ClassGroup group2 = m2.getClassFile().getGroup();
 
-		Execution e = new Execution(group1);
-		e.step = true;
-		Frame frame = new Frame(e, m1);
-		frame.initialize();
-		e.frames.add(frame);
+			Execution e = new Execution(group1);
+			e.step = true;
+			Frame frame = new Frame(e, m1);
+			frame.initialize();
+			e.frames.add(frame);
 
-		Execution e2 = new Execution(group2);
-		e2.step = true;
-		Frame frame2 = new Frame(e2, m2);
-		frame2.initialize();
-		e2.frames.add(frame2);
-		
-		frame.other = frame2;
-		frame2.other = frame;
-		
-		ParallellMappingExecutor parallel = new ParallellMappingExecutor(e, e2);
-		ParallelExecutorMapping mappings = new ParallelExecutorMapping(m1.getClassFile().getGroup(),
-			m2.getClassFile().getGroup());
-		
-		mappings.m1 = m1;
-		mappings.m2 = m2;
-		
-		parallel.mappings = mappings;
+			Execution e2 = new Execution(group2);
+			e2.step = true;
+			Frame frame2 = new Frame(e2, m2);
+			frame2.initialize();
+			e2.frames.add(frame2);
 
-		int same = 0;
-		while (parallel.step())
-		{
-			// get what each frame is paused/exited on
-			InstructionContext p1 = parallel.getP1(), p2 = parallel.getP2();
+			frame.other = frame2;
+			frame2.other = frame;
 
-			assert p1.getInstruction() instanceof MappableInstruction;
-			assert p2.getInstruction() instanceof MappableInstruction;
-			
-			MappableInstruction mi1 = (MappableInstruction) p1.getInstruction(),
-				mi2 = (MappableInstruction) p2.getInstruction();
+			ParallellMappingExecutor parallel = new ParallellMappingExecutor(e, e2);
+			ParallelExecutorMapping mappings = new ParallelExecutorMapping(m1.getClassFile().getGroup(),
+					m2.getClassFile().getGroup());
 
-			boolean isSame = mi1.isSame(p1, p2);
-			assert isSame == mi2.isSame(p2, p1)
-				: "isSame fail " + p1.getInstruction() + " <> " + p2.getInstruction();
-			
-			if (!isSame)
-			{
-				mappings.crashed = true;
-				p1.getFrame().stop();
-				p2.getFrame().stop();
-				continue;
+			mappings.m1 = m1;
+			mappings.m2 = m2;
+
+			parallel.mappings = mappings;
+
+			int same = 0;
+		try {
+			while (parallel.step()) {
+				// get what each frame is paused/exited on
+				InstructionContext p1 = parallel.getP1(), p2 = parallel.getP2();
+
+				assert p1.getInstruction() instanceof MappableInstruction;
+				assert p2.getInstruction() instanceof MappableInstruction;
+
+				MappableInstruction mi1 = (MappableInstruction) p1.getInstruction(),
+						mi2 = (MappableInstruction) p2.getInstruction();
+
+				boolean isSame = mi1.isSame(p1, p2);
+				assert isSame == mi2.isSame(p2, p1)
+						: "isSame fail " + p1.getInstruction() + " <> " + p2.getInstruction();
+
+				if (!isSame) {
+					mappings.crashed = true;
+					p1.getFrame().stop();
+					p2.getFrame().stop();
+					continue;
+				}
+
+				++same;
+				mi1.map(mappings, p1, p2);
 			}
-
-			++same;
-			mi1.map(mappings, p1, p2);
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
 
-		mappings.same = same;
-		
-		return mappings;
+			mappings.same = same;
+
+			return mappings;
 	}
 	
 	public static boolean isMappable(InvokeInstruction ii)

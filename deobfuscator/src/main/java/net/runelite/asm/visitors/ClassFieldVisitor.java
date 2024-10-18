@@ -22,12 +22,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 package net.runelite.asm.visitors;
 
 import net.runelite.asm.ClassFile;
 import net.runelite.asm.Field;
 import net.runelite.asm.Type;
-import net.runelite.asm.Annotation;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.FieldVisitor;
@@ -35,30 +35,36 @@ import org.objectweb.asm.Opcodes;
 
 public class ClassFieldVisitor extends FieldVisitor
 {
+	private final ClassFile classFile;
 	private final Field field;
 
-	ClassFieldVisitor(ClassFile cf, int access, String name, Type desc, Object value)
+	public ClassFieldVisitor(ClassFile cf, int access, String name, Type desc, Object value)
 	{
 		super(Opcodes.ASM5);
 
-		this.field = new Field(cf, name, desc);
-		this.field.setAccessFlags(access);
-		this.field.setValue(value);
+		this.classFile = cf;
 
-		cf.addField(field);
+		field = new Field(cf, name, desc);
+		field.setAccessFlags(access);
+		field.setValue(value);
 	}
 
 	@Override
 	public AnnotationVisitor visitAnnotation(String desc, boolean visible)
 	{
-		Annotation annotation = new Annotation(new Type(desc), visible);
-		this.field.addAnnotation(annotation);
-		return annotation;
+		Type type = new Type(desc);
+		return new FieldAnnotationVisitor(field, type);
 	}
 
 	@Override
 	public void visitAttribute(Attribute attr)
 	{
 		System.out.println(attr);
+	}
+
+	@Override
+	public void visitEnd()
+	{
+		classFile.addField(field);
 	}
 }

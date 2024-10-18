@@ -25,13 +25,10 @@
 
 package net.runelite.asm.attributes;
 
-import java.util.ArrayList;
-import java.util.List;
 import net.runelite.asm.Method;
 import net.runelite.asm.attributes.code.Exceptions;
 import net.runelite.asm.attributes.code.Instruction;
 import net.runelite.asm.attributes.code.Instructions;
-import net.runelite.asm.attributes.code.Label;
 import net.runelite.asm.attributes.code.instruction.types.LVTInstruction;
 import net.runelite.asm.signature.Signature;
 
@@ -41,11 +38,11 @@ public class Code
 	private int maxStack;
 	private Instructions instructions;
 	private final Exceptions exceptions;
-
+	
 	public Code(Method method)
 	{
 		this.method = method;
-
+		
 		exceptions = new Exceptions(this);
 		instructions = new Instructions(this);
 	}
@@ -59,12 +56,12 @@ public class Code
 	{
 		return maxStack;
 	}
-
+	
 	public void setMaxStack(int maxStack)
 	{
 		this.maxStack = maxStack;
 	}
-
+	
 	private int getMaxLocalsFromSig()
 	{
 		Method m = getMethod();
@@ -77,11 +74,12 @@ public class Code
 
 	/**
 	 * calculates the size of the lvt required for this method
+	 * @return
 	 */
 	public int getMaxLocals()
 	{
 		int max = -1;
-
+		
 		for (Instruction ins : instructions.getInstructions())
 		{
 			if (ins instanceof LVTInstruction)
@@ -95,45 +93,21 @@ public class Code
 				}
 			}
 		}
-
+		
 		int fromSig = getMaxLocalsFromSig();
 		if (fromSig > max)
 			max = fromSig;
-
+		
 		return max;
 	}
-
+	
 	public Exceptions getExceptions()
 	{
 		return exceptions;
 	}
-
+	
 	public Instructions getInstructions()
 	{
 		return instructions;
-	}
-
-	public List<Integer> getLineNumbers()
-	{
-		final List<Integer> lineNumbers = new ArrayList<>();
-
-		for (Instruction i : instructions.getInstructions())
-		{
-			if (!(i instanceof Label))
-			{
-				continue;
-			}
-
-			Integer lineNumber = ((Label) i).getLineNumber();
-			if (lineNumber == null)
-			{
-				continue;
-			}
-
-			lineNumbers.add(lineNumber);
-		}
-
-		lineNumbers.sort(Integer::compareTo);
-		return lineNumbers;
 	}
 }

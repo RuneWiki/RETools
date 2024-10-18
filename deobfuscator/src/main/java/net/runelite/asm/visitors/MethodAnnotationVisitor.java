@@ -22,62 +22,47 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package net.runelite.asm.execution;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
-import java.util.Collection;
+package net.runelite.asm.visitors;
+
 import net.runelite.asm.Method;
-import net.runelite.asm.attributes.code.Instruction;
+import net.runelite.asm.Type;
+import net.runelite.asm.attributes.annotation.Annotation;
+import net.runelite.asm.attributes.annotation.Element;
+import org.objectweb.asm.AnnotationVisitor;
+import org.objectweb.asm.Opcodes;
 
-public class MethodContext
+public class MethodAnnotationVisitor extends AnnotationVisitor
 {
-	private Execution execution;
-	private Method method;
-	private Multimap<InstructionContext, Instruction> visited = HashMultimap.create();
-	public Multimap<Instruction, InstructionContext> contexts = HashMultimap.create();
-
-	public MethodContext(Execution execution, Method method)
+	private final Method method;
+	private final Type type;
+	private final Annotation annotation;
+	
+	public MethodAnnotationVisitor(Method method, Type type)
 	{
-		this.execution = execution;
+		super(Opcodes.ASM5);
+		
 		this.method = method;
+		this.type = type;
+		
+		annotation = new Annotation(method.getAnnotations());
+		annotation.setType(type);
 	}
-
-	public Execution getExecution()
+	
+	@Override
+	public void visit(String name, Object value)
 	{
-		return execution;
+		Element element = new Element(annotation);
+		
+		element.setName(name);
+		element.setValue(value);
+		
+		annotation.addElement(element);
 	}
-
-	public Method getMethod()
+	
+	@Override
+	public void visitEnd()
 	{
-		return method;
-	}
-
-	protected boolean hasJumped(InstructionContext from, Instruction to)
-	{
-		Collection<Instruction> i = visited.get(from);
-		if (i != null && i.contains(to))
-		{
-			return true;
-		}
-
-		visited.put(from, to);
-		return false;
-	}
-
-	public Collection<InstructionContext> getInstructonContexts(Instruction i)
-	{
-		return contexts.get(i);
-	}
-
-	public Collection<InstructionContext> getInstructionContexts()
-	{
-		return (Collection) contexts.values();
-	}
-
-	public void reset()
-	{
-		contexts.clear();
-		visited.clear();
+		method.getAnnotations().addAnnotation(annotation);
 	}
 }

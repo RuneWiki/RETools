@@ -25,10 +25,11 @@
 
 package net.runelite.asm.execution;
 
+import net.runelite.asm.Type;
+
 import java.util.Arrays;
 import java.util.List;
 import net.runelite.asm.Method;
-import net.runelite.asm.Type;
 
 public class Stack
 {
@@ -39,13 +40,13 @@ public class Stack
 	{
 		stack = new StackContext[sz * 2]; // XXX FIXME
 	}
-
+	
 	public Stack(Stack other)
 	{
 		this.size = other.size;
 		this.stack = other.stack.clone();
 	}
-
+	
 	private void printStack(StackContext ctx, int level)
 	{
 		for (int i = 0; i < level; ++i)
@@ -65,7 +66,7 @@ public class Stack
 				printStack(stack[c], 0);
 			throw new RuntimeException("Stack overflow");
 		}
-
+		
 		assert !i.getType().equals(Type.VOID);
 
 		stack[size] = i;
@@ -79,12 +80,12 @@ public class Stack
 
 		return stack[--size];
 	}
-
+	
 	public int getSize()
 	{
 		return size;
 	}
-
+	
 	public List<StackContext> getStack()
 	{
 		return Arrays.asList(stack);

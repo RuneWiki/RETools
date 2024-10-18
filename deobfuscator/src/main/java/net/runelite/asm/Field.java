@@ -24,18 +24,17 @@
  */
 package net.runelite.asm;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import lombok.Getter;
-import net.runelite.asm.attributes.Annotated;
-import net.runelite.deob.DeobAnnotations;
+import net.runelite.asm.attributes.Annotations;
+import net.runelite.asm.attributes.annotation.Annotation;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Opcodes;
+
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
 import static org.objectweb.asm.Opcodes.ACC_PUBLIC;
 
-public class Field implements Annotated, Named
+public class Field
 {
 	public static final int ACCESS_MODIFIERS = ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED;
 
@@ -45,21 +44,23 @@ public class Field implements Annotated, Named
 	private String name;
 	private Type type;
 	private Object value; // ConstantValue
-	@Getter
-	private final Map<Type, Annotation> annotations = new LinkedHashMap<>();
+	private final Annotations annotations;
 
 	public Field(ClassFile classFile, String name, Type type)
 	{
 		this.classFile = classFile;
 		this.name = name;
 		this.type = type;
+
+		annotations = new Annotations();
 	}
 
 	public void accept(FieldVisitor visitor)
 	{
-		for (Annotation annotation : annotations.values())
+		for (Annotation annotation : annotations.getAnnotations())
 		{
-			annotation.accept(visitor.visitAnnotation(annotation.getType().toString(), true));
+			AnnotationVisitor av = visitor.visitAnnotation(annotation.getType().toString(), true);
+			annotation.accept(av);
 		}
 
 		visitor.visitEnd();
@@ -140,10 +141,15 @@ public class Field implements Annotated, Named
 		this.value = value;
 	}
 
+	public Annotations getAnnotations()
+	{
+		return annotations;
+	}
+
 	public net.runelite.asm.pool.Field getPoolField()
 	{
 		return new net.runelite.asm.pool.Field(
-			classFile.getPoolClass(),
+			new net.runelite.asm.pool.Class(classFile.getName()),
 			this.getName(),
 			this.getType()
 		);
