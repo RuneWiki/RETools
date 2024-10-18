@@ -8,19 +8,25 @@ output_dir = "dump"
 class_deob = false
 class_remap = false
 
-# pre-remap
+# see org.runewiki.deob.bytecode.BytecodeDeobfuscator for a list of bytecode transformers
+# pass them as strings minus the "Transformer" suffix
+
+# pre-remap: it can be useful to have the original names available or shuffle things before remapping
 pre_transformers = [
     # "OriginalName"
+    # "SortClassesLegacy" # 2004
 ]
 
 # post-remap
 transformers = [
     # "Visibility",
     # "OpaquePredicate",
+    # "ExceptionObfuscation",
     # "ExceptionTracing",
     # "Monitor",
     # "BitShift",
-    # "FernflowerException"
+    # "FernflowerException",
+    # "SortMethodsLineOrder"
 ]
 
 # run decompiler (fernflower)
@@ -28,6 +34,28 @@ class_decompile = true
 
 # run ast (javaparser) transformers
 java_cleanup = false
+
+# note: not every transformer is guaranteed to work. also, order matters. experiment a bit!
+ast_transformers = [
+    # "Unenclose",
+    # "NegativeLiteral",
+    # "Complement",
+    # "Not",
+    # "CharLiteral",
+    # "IfElse",
+    # "Ternary",
+    # "BinaryExprOrder",
+    # "AddSub",
+    # "Identity",
+    # "BitMask",
+    # "HexLiteral",
+    # "ValueOf",
+    # "NewInstance",
+    # "Increment",
+    # "ForLoopCondition",
+    # "RedundantCast",
+    # "Enclose"
+]
 
 [profile.zwyz]
 full = true # take over bytecode/remap transformations
