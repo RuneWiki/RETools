@@ -8,6 +8,10 @@ bin/
 /deob.toml
 /remap.txt
 
+/*.jar
+/mapping.txt
+/obforder.txt
+
 .DS_Store
 thumbs.db
 desktop.ini
