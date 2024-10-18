@@ -3,26 +3,11 @@ input_jar = "ref/runescape.jar"
 output_jar = "ref/runescape-deob.jar"
 output_dir = "src/main/java"
 
-class_deob = true
-class_remap = true
+class_deob = false
+class_remap = false
 class_decompile = true
-java_cleanup = true
-
-# pre-remap transformers
-pre_transformers = [
-    "OriginalName"
-]
-
-# post-remap transformers
-transformers = [
-    "Visibility",
-    "Zwyz"
-]
-
-# post-decompilation source transformers
-ast_transformers = [
-    "Increment"
-]
+java_cleanup = false
 
 [profile.zwyz]
-removeUnreachable = true
+full = true
+math = true

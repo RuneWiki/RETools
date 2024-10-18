@@ -1,10 +1,7 @@
 package zwyz.deob;
 
 import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.tree.AbstractInsnNode;
-import org.objectweb.asm.tree.IincInsnNode;
-import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
+import org.objectweb.asm.tree.*;
 
 import java.util.*;
 
@@ -14,6 +11,16 @@ public class VariableSplitter {
     private final Set<AbstractInsnNode> parameterLoads = new HashSet<>();
     private InstructionBlock startBlock;
     private int firstLocalIndex;
+
+    public static void run(List<ClassNode> classes) {
+        for (var clazz : classes) {
+            for (var method : clazz.methods) {
+                if ((method.access & Opcodes.ACC_ABSTRACT) == 0) {
+                    new VariableSplitter().run(method);
+                }
+            }
+        }
+    }
 
     public void run(MethodNode method) {
         firstLocalIndex = AsmUtil.getFirstLocalIndex(method);

@@ -6,13 +6,11 @@ import org.objectweb.asm.tree.*;
 import java.util.*;
 
 public class GotoDeobfuscator {
-    public static void run(List<ClassNode> classes, boolean removeUnreachable) {
+    public static void run(List<ClassNode> classes) {
         for (var clazz : classes) {
             for (var method : clazz.methods) {
                 if (method.instructions.size() != 0) {
-                    if (removeUnreachable) {
-                        AsmUtil.removeUnreachableCode(method);
-                    }
+                    AsmUtil.removeUnreachableCode(method);
 
                     if (method.tryCatchBlocks.isEmpty()) {
                         sortBlocks(method);

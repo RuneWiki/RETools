@@ -17,6 +17,10 @@ public class ErrorHandlers {
             for (var method : clazz.methods) {
                 if (removeErrorHandler(clazz, method)) {
                     obfuscatedMethods.add(method.name);
+
+                    // if (!calledMethods.contains(method.name)) {
+                    //     System.out.println("not called " + clazz.name + "." + method.name + method.desc);
+                    // }
                 } else if ((method.access & Opcodes.ACC_ABSTRACT) == 0) {
                     unobfuscatedMethods.add(method.name);
                 }

@@ -266,9 +266,15 @@ public class AsmUtil {
         return -1;
     }
 
+    public static void print(MethodNode method) {
+        for (var line : CodeString.compute(method.instructions)) {
+            System.out.println(line);
+        }
+    }
+
     public static boolean isClassObfuscated(String name) {
         if (name.equals(name.toUpperCase()) && name.length() == 8) {
-            // (pazaz) 2005-2006
+            // 2005-2006
             return true;
         }
         return OBF_PATTERN.matcher(name).matches();

@@ -8,7 +8,7 @@ import org.objectweb.asm.tree.MethodNode;
 import java.util.*;
 
 public class StaticMethods {
-    public static void run(List<ClassNode> classes, LinkedHashSet<String> calledMethods, HashSet<String> obfuscatedMethods, ClassNode staticsClass) {
+    public static void run(List<ClassNode> classes, LinkedHashSet<String> calledMethods, HashSet<String> obfuscatedMethods, ClassNode staticsClass, ClassNode movedAnnotationClass) {
         // Compute method hashes
         var methodOwners = new HashMap<String, String>();
         var methodsByHash = new HashMap<Integer, List<String>>();
@@ -58,14 +58,10 @@ public class StaticMethods {
         }
 
         for (var clazz : classes) {
-            if (clazz.name.contains("/")) {
-                // (pazaz) packages cannot access default package!
-                continue;
-            }
-
             for (var method : clazz.methods) {
                 if (method.name.startsWith("method") && (method.access & Opcodes.ACC_STATIC) != 0 && obfuscatedMethods.contains(method.name)) {
-                    realOwners.putIfAbsent(method.name, staticsClass.name);
+                    realOwners.putIfAbsent(method.name, "statics");
+                    // System.out.println(clazz.name + "." + method.name + " -> " + realOwners.get(method.name));
                 }
             }
         }
@@ -90,6 +86,12 @@ public class StaticMethods {
                     clazz.methods.remove(method);
                     classesByName.get(realOwner).methods.add(method);
                     method.access = (method.access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC;
+
+                    if (realOwner.equals("statics")) {
+                        if (ZwyzDeobStep1.TRACK_MOVED) {
+                            method.visitAnnotation("L" + movedAnnotationClass.name + ";", false).visitEnd();
+                        }
+                    }
                 }
 
                 for (var instruction : method.instructions) {

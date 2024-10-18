@@ -25,12 +25,8 @@ public class BytecodeDeobfuscator {
         registerTransformer(new OriginalNameTransformer());
         registerTransformer(new RedundantGotoTransformer());
         registerTransformer(new VisibilityTransformer());
-        registerTransformer(new ZwyzTransformer());
         registerTransformer(new BitShiftTransformer());
-        registerTransformer(new SortFieldsNameTransformer());
         registerTransformer(new SortMethodsLineOrderTransformer());
-        registerTransformer(new VariableSplitterTransformer());
-        registerTransformer(new ExpressionSorterTransformer());
         registerTransformer(new FernflowerExceptionTransformer());
         registerTransformer(new ExceptionObfuscationTransformer());
     }

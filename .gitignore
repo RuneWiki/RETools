@@ -7,3 +7,7 @@ bin/
 /dump/
 /deob.toml
 /remap.txt
+
+.DS_Store
+thumbs.db
+desktop.ini

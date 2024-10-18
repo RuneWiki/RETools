@@ -10,13 +10,11 @@ import java.util.List;
 import java.util.Objects;
 
 public class ParameterChecks {
-    private static final boolean COMPLEX_PARAMETER_CHECKS = true;
-
-    public static void run(List<ClassNode> classes, HashSet<String> obfuscatedMethods, HashSet<String> unobfuscatedMethods) {
+    static void run(List<ClassNode> classes, HashSet<String> obfuscatedMethods, HashSet<String> unobfuscatedMethods) {
         // scan for constants
         var exclude = new HashSet<String>();
 
-        if (COMPLEX_PARAMETER_CHECKS) {
+        if (ZwyzDeobStep1.COMPLEX_PARAMETER_CHECKS) {
             for (var clazz : classes) {
                 for (var method : clazz.methods) {
                     var instruction = method.instructions.getFirst();
@@ -29,7 +27,7 @@ public class ParameterChecks {
                             if (argumentTypes.length == 0) {
                                 exclude.add(mi.name);
                             } else {
-                                if (AsmUtil.isIntConstant(instruction.getPrevious())) {
+                                if (AsmUtil.isIntConstant(instruction.getPrevious()) || ZwyzDeobStep1.RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
                                     // could remove
                                 } else {
                                     exclude.add(mi.name);
@@ -61,6 +59,7 @@ public class ParameterChecks {
 
                 if (shouldRemove) {
                     if (exclude.contains(method.name) || !removeParameterCheck(clazz, method)) {
+                        // System.out.println("not checked " + clazz.name + "." + method.name + method.desc);
                     } else {
                         parameterCheckRemoved.add(method.name);
                     }
@@ -78,7 +77,7 @@ public class ParameterChecks {
                         var argumentTypes = type.getArgumentTypes();
                         mi.desc = Type.getMethodType(type.getReturnType(), Arrays.copyOfRange(argumentTypes, 0, argumentTypes.length - 1)).getDescriptor();
 
-                        if (AsmUtil.isIntConstant(instruction.getPrevious())) {
+                        if (AsmUtil.isIntConstant(instruction.getPrevious()) || ZwyzDeobStep1.RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
                             method.instructions.remove(instruction.getPrevious());
                         } else {
                             throw new AssertionError();
@@ -126,7 +125,7 @@ public class ParameterChecks {
         }
 
         if (removed && kept) {
-            if (COMPLEX_PARAMETER_CHECKS) {
+            if (ZwyzDeobStep1.COMPLEX_PARAMETER_CHECKS) {
                 method.instructions = original.instructions;
                 return false; // revert
             } else {
@@ -178,7 +177,7 @@ public class ParameterChecks {
 
         var endLabel = ((JumpInsnNode) instruction).label;
 
-        if (!COMPLEX_PARAMETER_CHECKS) {
+        if (!ZwyzDeobStep1.COMPLEX_PARAMETER_CHECKS) {
             instruction = instruction.getNext();
             if (AsmUtil.isNew(instruction, "java/lang/IllegalStateException")) { // new java/lang/IllegalStateException
                 // dup
@@ -198,10 +197,12 @@ public class ParameterChecks {
                 if (!(instruction.getOpcode() == Opcodes.ATHROW)) {
                     return false;
                 }
-            } else if (instruction.getOpcode() == Opcodes.RETURN) {
+            } else if (instruction.getOpcode() == Opcodes.RETURN) { // return
                 // ok
             } else {
-                return false;
+                if (!ZwyzDeobStep1.RUNELITE) {
+                    return false;
+                }
             }
         }
 

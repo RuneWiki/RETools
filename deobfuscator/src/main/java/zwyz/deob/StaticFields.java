@@ -9,11 +9,15 @@ import java.util.HashSet;
 import java.util.List;
 
 public class StaticFields {
-    public static void run(List<ClassNode> classes, ClassNode staticsClass) {
+    static void run(List<ClassNode> classes, ClassNode staticsClass, ClassNode movedAnnotationClass) {
         // Remove unused fields
         var usedFields = new HashSet<String>();
 
         for (var clazz : classes) {
+            if (ZwyzDeobStep1.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
+
             for (var method : clazz.methods) {
                 for (var instruction : method.instructions) {
                     if (instruction instanceof FieldInsnNode fieldInsn) {
@@ -24,6 +28,10 @@ public class StaticFields {
         }
 
         for (var clazz : classes) {
+            if (ZwyzDeobStep1.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
+
             clazz.fields.removeIf(f -> !usedFields.contains(f.name));
         }
 
@@ -31,6 +39,10 @@ public class StaticFields {
         var unmovedFields = new HashSet<String>();
 
         for (var clazz : classes) {
+            if (ZwyzDeobStep1.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
+
             for (var method : clazz.methods) {
                 if (method.name.equals("<clinit>")) {
                     for (var instruction : method.instructions) {
@@ -45,7 +57,11 @@ public class StaticFields {
         var movedFields = new HashSet<String>();
 
         for (var clazz : classes) {
-            if (clazz.name.equals(staticsClass.name)) {
+            if (ZwyzDeobStep1.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
+
+            if (clazz.name.equals("statics")) {
                 continue;
             }
 
@@ -54,12 +70,19 @@ public class StaticFields {
                     movedFields.add(field.name);
                     clazz.fields.remove(field);
                     staticsClass.fields.add(field);
-                    field.access = (field.access & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) | Opcodes.ACC_PUBLIC;
+
+                    if (ZwyzDeobStep1.TRACK_MOVED) {
+                        field.visitAnnotation("L" + movedAnnotationClass.name + ";", false).visitEnd();
+                    }
                 }
             }
         }
 
         for (var clazz : classes) {
+            if (ZwyzDeobStep1.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
+
             for (var method : clazz.methods) {
                 for (var instruction : method.instructions) {
                     if (instruction instanceof FieldInsnNode fieldInsn && (fieldInsn.getOpcode() == Opcodes.GETSTATIC || fieldInsn.getOpcode() == Opcodes.PUTSTATIC) && movedFields.contains(fieldInsn.name)) {
