@@ -1,13 +1,34 @@
 [profile]
-input_jar = "ref/runescape.jar"
-output_jar = "ref/runescape-deob.jar"
-output_dir = "src/main/java"
+input_jar = "gamepack.jar"
+output_jar = "gamepack" # in zwyz-full mode this appends .jar for you as part of a multi-step process
+                        # otherwise make sure you use a unique name with a good file extension!
+output_dir = "dump"
 
+# run bytecode (objectweb.asm) transformers
 class_deob = false
 class_remap = false
+
+# pre-remap
+pre_transformers = [
+    # "OriginalName"
+]
+
+# post-remap
+transformers = [
+    # "Visibility",
+    # "OpaquePredicate",
+    # "ExceptionTracing",
+    # "Monitor",
+    # "BitShift",
+    # "FernflowerException"
+]
+
+# run decompiler (fernflower)
 class_decompile = true
+
+# run ast (javaparser) transformers
 java_cleanup = false
 
 [profile.zwyz]
-full = true
-math = true
+full = true # take over bytecode/remap transformations
+math = true # apply runelite math deob
