@@ -4,12 +4,13 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.runewiki.asm.transform.Transformer;
 import org.runewiki.deob.bytecode.remap.SimpleObfRemapper;
 import org.runewiki.deob.AsmUtil;
+import org.tomlj.TomlParseResult;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,6 +18,18 @@ import java.nio.file.Paths;
 import java.util.*;
 
 public class RemapTransformer extends Transformer {
+    private static String mappingFile = "remap.txt";
+
+    @Override
+    public void provide(TomlParseResult profile) {
+        super.provide(profile);
+
+        String file = profile.getString("profile.class_remap_file");
+        if (file != null) {
+            mappingFile = file;
+        }
+    }
+
     @Override
     public void preTransform(List<ClassNode> classes) {
         var inheriting = computeInheritance(classes);
@@ -69,7 +82,7 @@ public class RemapTransformer extends Transformer {
 
         // load existing mappings and merge
         try {
-            Path path = Paths.get("remap.txt");
+            Path path = Paths.get(mappingFile);
             if (Files.exists(path)) {
                 Files.lines(path).forEach(line -> {
                     String[] parts = line.split("=");
@@ -77,10 +90,16 @@ public class RemapTransformer extends Transformer {
                     var oldFqn = parts[0];
                     var newName = parts[1];
 
+                    // moving members to a new class
                     if (oldFqn.contains(".") && newName.contains(".")) {
-                        // moving members to a new class
+                        // format: oldclass.member=newclass.member
                         var owner = newName.substring(0, newName.lastIndexOf("."));
                         newName = newName.substring(newName.lastIndexOf(".") + 1);
+                        newOwners.put(oldFqn, owner);
+                    } else if (newName.contains(",")) {
+                        // alternate format: oldclass.member=member,newclass
+                        var owner = newName.substring(newName.lastIndexOf(",") + 1);
+                        newName = newName.substring(0, newName.lastIndexOf(","));
                         newOwners.put(oldFqn, owner);
                     }
 
@@ -92,7 +111,7 @@ public class RemapTransformer extends Transformer {
         }
 
         // save combined mappings to file
-        try {
+        /*try {
             Path path = Paths.get("remap.txt");
             BufferedWriter writer = Files.newBufferedWriter(path);
 
@@ -105,7 +124,7 @@ public class RemapTransformer extends Transformer {
             writer.close();
         } catch (IOException ex) {
             ex.printStackTrace();
-        }
+        }*/
 
         var remapper = new SimpleObfRemapper(remap);
         var remappedClasses = new ArrayList<ClassNode>();
@@ -119,6 +138,57 @@ public class RemapTransformer extends Transformer {
         classes.clear();
         classes.addAll(remappedClasses);
         moveStatics(classes, newOwners, remapper);
+
+        for (var clazz : remappedClasses) {
+            var fileName = clazz.name;
+
+            if (fileName.contains("$")) {
+                fileName = fileName.substring(0, fileName.indexOf("$"));
+            }
+
+            clazz.sourceFile = fileName + ".java";
+        }
+
+        // Set inner class info
+        var innerClasses = new HashMap<String, List<String>>();
+        var innerClassesAccess = new HashMap<String, Integer>();
+
+        for (var clazz : remappedClasses) {
+            var lastInnerIndex = clazz.name.lastIndexOf('$');
+
+            if (lastInnerIndex != -1) {
+                innerClasses.computeIfAbsent(clazz.name.substring(0, lastInnerIndex), k -> new ArrayList<>()).add(clazz.name);
+            }
+
+            var access = clazz.access | Opcodes.ACC_STATIC; // todo: is | STATIC necessary
+
+            for (var field : clazz.fields) {
+                if (field.name.startsWith("this$")) {
+                    access &= ~Opcodes.ACC_STATIC;
+                }
+            }
+
+            innerClassesAccess.put(clazz.name, access);
+        }
+
+        for (var clazz : remappedClasses) {
+            var inner = innerClasses.get(clazz.name);
+
+            if (inner != null) {
+                clazz.innerClasses = new ArrayList<>();
+
+                for (var fullName : inner) {
+                    var innerName = fullName.substring(fullName.lastIndexOf('$') + 1);
+                    var access = innerClassesAccess.get(fullName);
+
+                    if (innerName.matches("[0-9]+")) { // anonymous
+                        clazz.innerClasses.add(new InnerClassNode(fullName, null, null, access));
+                    } else {
+                        clazz.innerClasses.add(new InnerClassNode(fullName, clazz.name, innerName, access));
+                    }
+                }
+            }
+        }
     }
 
     private static Map<String, Set<String>> computeLinkedFields(List<ClassNode> classes, Map<String, Set<String>> inheriting) {
@@ -230,7 +300,6 @@ public class RemapTransformer extends Transformer {
     }
 
     // todo: move static initializers from <clinit> to new class
-    // todo: support inner classes
     private static void moveStatics(List<ClassNode> classes, HashMap<String, String> newOwners, SimpleObfRemapper remapper) {
         if (newOwners.isEmpty()) {
             return;
