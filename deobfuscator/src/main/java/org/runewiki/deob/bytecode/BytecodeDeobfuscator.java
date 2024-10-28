@@ -59,28 +59,28 @@ public class BytecodeDeobfuscator {
     public void run(List<ClassNode> classes) throws IOException {
         System.out.println("---- Deobfuscating ----");
 
-        TomlArray preTransformers = this.profile.getArray("profile.pre_transformers");
-        if (preTransformers != null) {
-            for (int i = 0; i < preTransformers.size(); i++) {
-                String name = preTransformers.getString(i);
+        if (Boolean.TRUE.equals(this.profile.getBoolean("profile.remap.enable"))) {
+            TomlArray preTransformers = this.profile.getArray("profile.remap.transformers");
+            if (preTransformers != null) {
+                for (int i = 0; i < preTransformers.size(); i++) {
+                    String name = preTransformers.getString(i);
 
-                Transformer transformer = this.allTransformers.get(name);
-                if (transformer != null) {
-                    System.out.println("Applying " + name + " pre-transformer");
-                    transformer.transform(classes);
-                } else {
-                    System.err.println("Unknown transformer: " + name);
+                    Transformer transformer = this.allTransformers.get(name);
+                    if (transformer != null) {
+                        System.out.println("Applying " + name + " pre-transformer");
+                        transformer.transform(classes);
+                    } else {
+                        System.err.println("Unknown transformer: " + name);
+                    }
                 }
             }
-        }
 
-        if (Boolean.TRUE.equals(this.profile.getBoolean("profile.class_remap"))) {
             Transformer remap = new RemapTransformer();
             remap.provide(this.profile);
             remap.transform(classes);
         }
 
-        TomlArray transformers = this.profile.getArray("profile.transformers");
+        TomlArray transformers = this.profile.getArray("profile.deob.transformers");
         if (transformers != null) {
             for (int i = 0; i < transformers.size(); i++) {
                 String name = transformers.getString(i);

@@ -20,8 +20,8 @@ public class ParameterChecksTransformer extends Transformer {
     public void provide(TomlParseResult profile) {
         super.provide(profile);
 
-        RUNELITE = Boolean.TRUE.equals(profile.getBoolean("profile.parameter_checks.runelite"));
-        COMPLEX_PARAMETER_CHECKS = Boolean.TRUE.equals(profile.getBoolean("profile.parameter_checks.complex"));
+        RUNELITE = Boolean.TRUE.equals(profile.getBoolean("profile.deob.parameter_checks.runelite"));
+        COMPLEX_PARAMETER_CHECKS = Boolean.TRUE.equals(profile.getBoolean("profile.deob.parameter_checks.complex"));
     }
 
     @Override

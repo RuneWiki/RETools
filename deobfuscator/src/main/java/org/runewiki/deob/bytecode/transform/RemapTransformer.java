@@ -24,7 +24,7 @@ public class RemapTransformer extends Transformer {
     public void provide(TomlParseResult profile) {
         super.provide(profile);
 
-        String file = profile.getString("profile.class_remap_file");
+        String file = profile.getString("profile.remap.file");
         if (file != null) {
             mappingFile = file;
         }

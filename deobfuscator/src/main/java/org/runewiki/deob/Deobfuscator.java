@@ -19,33 +19,31 @@ public class Deobfuscator {
                 System.exit(1);
             }
 
-            String inputJar = profile.getString("profile.input_jar");
-            String outputJar = profile.getString("profile.output_jar");
-            String outputDir = profile.getString("profile.output_dir");
+            String inputJar = profile.getString("profile.input");
 
-            if (inputJar == null || outputJar == null || outputDir == null) {
-                System.err.println("deob.toml is invalid, see example file");
+            if (inputJar == null) {
+                System.err.println("No input file, nothing to do!");
                 System.exit(1);
             }
 
             List<ClassNode> classes = JarUtil.readClasses(Paths.get(inputJar));
             System.out.println("Loaded " + classes.size() + " classes");
 
-            if (Boolean.TRUE.equals(profile.getBoolean("profile.class_deob"))) {
+            if (Boolean.TRUE.equals(profile.getBoolean("profile.deob.enable"))) {
                 BytecodeDeobfuscator bytecode = new BytecodeDeobfuscator(profile);
                 bytecode.run(classes);
             }
 
-            if (Boolean.TRUE.equals(profile.getBoolean("profile.class_decompile"))) {
-                Decompiler decompiler = new Decompiler(profile, outputDir, classes);
+            if (Boolean.TRUE.equals(profile.getBoolean("profile.source.decompile"))) {
+                Decompiler decompiler = new Decompiler(profile, "src/main/java", classes);
                 decompiler.run();
 
-                if (Boolean.TRUE.equals(profile.getBoolean("profile.java_cleanup"))) {
+                if (Boolean.TRUE.equals(profile.getBoolean("profile.source.cleanup"))) {
                     AstDeobfuscator ast = new AstDeobfuscator(profile);
                     ast.run();
                 }
             } else {
-                JarUtil.writeClasses(Paths.get(outputJar), classes);
+                JarUtil.writeClasses(Paths.get(inputJar.replace(".jar", "-deob.jar")), classes);
             }
         } catch (Exception ex) {
             ex.printStackTrace();

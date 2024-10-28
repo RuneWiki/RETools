@@ -56,11 +56,9 @@ public class AstDeobfuscator {
     public void run() {
         System.out.println("---- Deobfuscating AST ----");
 
-        String sources = this.profile.getString("profile.output_dir");
-
         var solver = new CombinedTypeSolver();
 
-        TomlArray classpath = this.profile.getArray("profile.classpath");
+        TomlArray classpath = this.profile.getArray("profile.source.classpath");
         if (classpath != null) {
             for (int i = 0; i < classpath.size(); i++) {
                 try {
@@ -71,17 +69,17 @@ public class AstDeobfuscator {
         }
 
         solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
-        solver.add(new JavaParserTypeSolver(sources));
+        solver.add(new JavaParserTypeSolver("src/main/java"));
 
 		var config = new ParserConfiguration();
         config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
         config.setSymbolResolver(new JavaSymbolSolver(solver));
 
-        SourceRoot root = new SourceRoot(Paths.get(sources), config);
+        SourceRoot root = new SourceRoot(Paths.get("src/main/java"), config);
         root.tryToParseParallelized();
         List<CompilationUnit> compilations = root.getCompilationUnits();
 
-        TomlArray astTransformers = this.profile.getArray("profile.ast_transformers");
+        TomlArray astTransformers = this.profile.getArray("profile.source.transformers");
         if (astTransformers != null) {
             for (int i = 0; i < astTransformers.size(); i++) {
                 String name = astTransformers.getString(i);
