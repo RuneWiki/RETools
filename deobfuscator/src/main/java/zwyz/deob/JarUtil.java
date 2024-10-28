@@ -39,6 +39,29 @@ public class JarUtil {
         return classes;
     }
 
+    public static void readClasses(Path path, List<ClassNode> classes) throws IOException {
+        classes.clear();
+
+        try (var zin = new ZipInputStream(Files.newInputStream(path))) {
+            while (true) {
+                var entry = zin.getNextEntry();
+
+                if (entry == null) {
+                    break;
+                }
+
+                var string = entry.getName();
+
+                if (string.endsWith(".class")) {
+                    var reader = new ClassReader(zin);
+                    var node = new ClassNode();
+                    reader.accept(node, ClassReader.SKIP_FRAMES);
+                    classes.add(node);
+                }
+            }
+        }
+    }
+
     public static void writeClasses(Path path, List<ClassNode> classes) throws IOException {
         try (var zout = new ZipOutputStream(Files.newOutputStream(path))) {
             for (var clazz : classes) {

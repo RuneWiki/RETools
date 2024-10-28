@@ -18,6 +18,8 @@ public class BytecodeDeobfuscator {
     public BytecodeDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
 
+        registerTransformer(new RlMathTransformer());
+
         // openrs2
         registerTransformer(new SortClassesLegacyTransformer());
         registerTransformer(new ExceptionTracingTransformer());
