@@ -7,19 +7,15 @@ import org.runewiki.deob.AsmUtil;
 
 import java.util.*;
 
-public class GotoDeobfuscatorTransformer extends Transformer {
+public class GotoTransformer extends Transformer {
     @Override
-    public boolean transformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
-        if (method.instructions.size() != 0) {
-            AsmUtil.removeUnreachableCode(method);
-
-            if (method.tryCatchBlocks.isEmpty()) {
-                sortBlocks(method);
-            }
-
-            AsmUtil.removeGotoNext(method);
-            AsmUtil.removeUnusedLabels(method);
+    public boolean transformCode(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
+        if (method.tryCatchBlocks.isEmpty()) {
+            sortBlocks(method);
         }
+
+        AsmUtil.removeGotoNext(method);
+        AsmUtil.removeUnusedLabels(method);
 
         return false;
     }

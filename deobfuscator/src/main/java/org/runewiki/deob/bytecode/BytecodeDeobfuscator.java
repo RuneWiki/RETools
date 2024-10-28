@@ -39,7 +39,8 @@ public class BytecodeDeobfuscator {
         registerTransformer(new DeleteInvokeDynamicTransformer());
         registerTransformer(new ErrorHandlersTransformer());
         registerTransformer(new ExpressionSorterTransformer());
-        registerTransformer(new GotoDeobfuscatorTransformer());
+        registerTransformer(new UnreachableCodeTransformer()); // extracted out of GotoTransformer but goes hand-in-hand
+        registerTransformer(new GotoTransformer());
         registerTransformer(new ParameterChecksTransformer());
         registerTransformer(new SortFieldsNameTransformer());
         registerTransformer(new SortMethodsTransformer());
