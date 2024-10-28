@@ -55,7 +55,7 @@ public class StaticFieldsTransformer extends Transformer {
         for (var clazz : classes) {
             // todo: skip external libraries
 
-            if (clazz.name.equals("statics")) {
+            if (clazz.name.equals("deob/statics")) {
                 continue;
             }
 

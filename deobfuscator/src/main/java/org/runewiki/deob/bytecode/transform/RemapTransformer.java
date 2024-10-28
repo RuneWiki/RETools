@@ -19,6 +19,7 @@ import java.util.*;
 
 public class RemapTransformer extends Transformer {
     private static String mappingFile = "remap.txt";
+    private static String defaultPackage = "deob";
 
     @Override
     public void provide(TomlParseResult profile) {
@@ -28,10 +29,15 @@ public class RemapTransformer extends Transformer {
         if (file != null) {
             mappingFile = file;
         }
+
+        String pkg = profile.getString("profile.remap.default_package");
+        if (pkg != null) {
+            defaultPackage = pkg;
+        }
     }
 
     @Override
-    public void preTransform(List<ClassNode> classes) {
+    public void transform(List<ClassNode> classes) {
         var inheriting = computeInheritance(classes);
         var linkedMethods = computeLinkedMethods(classes, inheriting);
         var linkedFields = computeLinkedFields(classes, inheriting);
@@ -46,10 +52,10 @@ public class RemapTransformer extends Transformer {
             var className = clazz.name.substring(clazz.name.lastIndexOf('/') + 1);
 
             if (AsmUtil.isClassObfuscated(className)) {
-                var newName = packageName + "class" + ++classCounter;
-                remap.put(clazz.name, newName);
+                className = packageName + "class" + ++classCounter;
+                remap.put(clazz.name, packageName.isEmpty() ? (defaultPackage + "/" + className) : className);
             } else {
-                remap.put(clazz.name, clazz.name);
+                remap.put(clazz.name, packageName.isEmpty() ? (defaultPackage + "/" + clazz.name) : clazz.name);
             }
 
             for (var field : clazz.fields) {
