@@ -59,8 +59,10 @@ public class BytecodeDeobfuscator {
     public void run(List<ClassNode> classes) throws IOException {
         System.out.println("---- Deobfuscating ----");
 
-        if (Boolean.TRUE.equals(this.profile.getBoolean("profile.remap.enable"))) {
-            TomlArray preTransformers = this.profile.getArray("profile.remap.transformers");
+        TomlArray preTransformers = this.profile.getArray("profile.remap.transformers");
+        boolean enableRemap = Boolean.TRUE.equals(this.profile.getBoolean("profile.remap.enable"));
+
+        if (enableRemap) {
             if (preTransformers != null) {
                 for (int i = 0; i < preTransformers.size(); i++) {
                     String name = preTransformers.getString(i);
@@ -91,6 +93,30 @@ public class BytecodeDeobfuscator {
                     transformer.transform(classes);
                 } else {
                     System.err.println("Unknown transformer: " + name);
+                }
+            }
+        }
+
+        // run finalTransform pass (if they need to run something at the very end of all processing)
+
+        if (enableRemap && preTransformers != null) {
+            for (int i = 0; i < preTransformers.size(); i++) {
+                String name = preTransformers.getString(i);
+
+                Transformer transformer = this.allTransformers.get(name);
+                if (transformer != null) {
+                    transformer.finalTransform(classes);
+                }
+            }
+        }
+
+        if (transformers != null) {
+            for (int i = 0; i < transformers.size(); i++) {
+                String name = transformers.getString(i);
+
+                Transformer transformer = this.allTransformers.get(name);
+                if (transformer != null) {
+                    transformer.finalTransform(classes);
                 }
             }
         }

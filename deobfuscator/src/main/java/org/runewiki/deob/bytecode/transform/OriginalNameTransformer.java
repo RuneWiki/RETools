@@ -18,7 +18,7 @@ public class OriginalNameTransformer extends Transformer {
     }
 
     @Override
-    public void postTransform(List<ClassNode> classes) {
+    public void finalTransform(List<ClassNode> classes) {
         try {
             {
                 ClassReader reader = new ClassReader("org.openrs2.deob.annotation.OriginalClass");
