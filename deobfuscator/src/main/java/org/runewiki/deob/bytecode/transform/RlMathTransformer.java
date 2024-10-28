@@ -16,10 +16,10 @@ import java.nio.file.Paths;
 import java.util.List;
 
 public class RlMathTransformer extends Transformer {
-    private ClassGroup group = new ClassGroup();
-
     @Override
     public void preTransform(List<ClassNode> classes) {
+        ClassGroup group;
+
         try {
             JarUtil.writeClasses(Paths.get("deob-rl-pre.jar"), classes);
             classes.clear();
