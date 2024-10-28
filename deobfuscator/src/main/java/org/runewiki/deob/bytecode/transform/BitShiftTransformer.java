@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.MethodNode;
 import org.runewiki.asm.InsnMatcher;
 import org.runewiki.asm.InsnNodeUtil;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.AsmUtil;
+import org.runewiki.deob.AsmUtil;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package zwyz.deob;
+package org.runewiki.deob.bytecode;
 
 import org.objectweb.asm.Handle;
 import org.objectweb.asm.Label;

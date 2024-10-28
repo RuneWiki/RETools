@@ -3,8 +3,7 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.AsmUtil;
-import zwyz.deob.GotoDeobfuscator;
+import org.runewiki.deob.AsmUtil;
 
 import java.util.*;
 
@@ -53,14 +52,14 @@ public class GotoDeobfuscatorTransformer extends Transformer {
         method.instructions = newInstructions.instructions;
     }
 
-    private static List<GotoDeobfuscator.Block> sortBlocks(InsnList code) {
-        var startBlock = new GotoDeobfuscator.Block();
-        Map<LabelNode, GotoDeobfuscator.Block> labelBlocks = new HashMap<>();
+    private static List<Block> sortBlocks(InsnList code) {
+        var startBlock = new Block();
+        Map<LabelNode, Block> labelBlocks = new HashMap<>();
         var currentBlock = startBlock;
 
         for (var instruction : code) {
             if (instruction instanceof LabelNode label) {
-                var nextBlock = labelBlocks.computeIfAbsent(label, l -> new GotoDeobfuscator.Block());
+                var nextBlock = labelBlocks.computeIfAbsent(label, l -> new Block());
 
                 if (currentBlock.instructions.isEmpty() || !AsmUtil.isTerminal(currentBlock.instructions.get(currentBlock.instructions.size() - 1))) {
                     currentBlock.next = nextBlock;
@@ -75,17 +74,17 @@ public class GotoDeobfuscatorTransformer extends Transformer {
 
             // Link block to jump targets
             for (var target : AsmUtil.getJumpTargets(instruction)) {
-                currentBlock.jumpTargets.add(labelBlocks.computeIfAbsent(target, k -> new GotoDeobfuscator.Block()));
+                currentBlock.jumpTargets.add(labelBlocks.computeIfAbsent(target, k -> new Block()));
             }
         }
 
-        List<GotoDeobfuscator.Block> result = new ArrayList<>();
+        List<Block> result = new ArrayList<>();
         sort(result, new HashSet<>(), startBlock);
         Collections.reverse(result);
         return result;
     }
 
-    private static void sort(List<GotoDeobfuscator.Block> result, Set<GotoDeobfuscator.Block> visited, GotoDeobfuscator.Block block) {
+    private static void sort(List<Block> result, Set<Block> visited, Block block) {
         if (!visited.add(block)) {
             return;
         }
@@ -103,8 +102,8 @@ public class GotoDeobfuscatorTransformer extends Transformer {
 
     public static class Block {
         public List<AbstractInsnNode> instructions = new ArrayList<>();
-        public List<GotoDeobfuscator.Block> jumpTargets = new ArrayList<>();
-        public GotoDeobfuscator.Block last;
-        public GotoDeobfuscator.Block next;
+        public List<Block> jumpTargets = new ArrayList<>();
+        public Block last;
+        public Block next;
     }
 }

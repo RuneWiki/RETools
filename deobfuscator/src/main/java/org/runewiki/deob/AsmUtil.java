@@ -1,4 +1,4 @@
-package zwyz.deob;
+package org.runewiki.deob;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -59,9 +59,9 @@ public class AsmUtil {
 
     public static boolean isInvokeSpecial(AbstractInsnNode instruction, String owner, String name, String desc) {
         return instruction.getOpcode() == Opcodes.INVOKESPECIAL &&
-               Objects.equals(((MethodInsnNode) instruction).owner, owner) &&
-               Objects.equals(((MethodInsnNode) instruction).name, name) &&
-               Objects.equals(((MethodInsnNode) instruction).desc, desc);
+                Objects.equals(((MethodInsnNode) instruction).owner, owner) &&
+                Objects.equals(((MethodInsnNode) instruction).name, name) &&
+                Objects.equals(((MethodInsnNode) instruction).desc, desc);
     }
 
     public static boolean isNew(AbstractInsnNode instruction, String type) {
@@ -128,15 +128,15 @@ public class AsmUtil {
 
     public static boolean isTerminal(AbstractInsnNode instruction) {
         return instruction.getOpcode() == Opcodes.GOTO ||
-               instruction.getOpcode() == Opcodes.RETURN ||
-               instruction.getOpcode() == Opcodes.ARETURN ||
-               instruction.getOpcode() == Opcodes.IRETURN ||
-               instruction.getOpcode() == Opcodes.LRETURN ||
-               instruction.getOpcode() == Opcodes.FRETURN ||
-               instruction.getOpcode() == Opcodes.DRETURN ||
-               instruction.getOpcode() == Opcodes.ATHROW ||
-               instruction.getOpcode() == Opcodes.TABLESWITCH ||
-               instruction.getOpcode() == Opcodes.LOOKUPSWITCH;
+                instruction.getOpcode() == Opcodes.RETURN ||
+                instruction.getOpcode() == Opcodes.ARETURN ||
+                instruction.getOpcode() == Opcodes.IRETURN ||
+                instruction.getOpcode() == Opcodes.LRETURN ||
+                instruction.getOpcode() == Opcodes.FRETURN ||
+                instruction.getOpcode() == Opcodes.DRETURN ||
+                instruction.getOpcode() == Opcodes.ATHROW ||
+                instruction.getOpcode() == Opcodes.TABLESWITCH ||
+                instruction.getOpcode() == Opcodes.LOOKUPSWITCH;
     }
 
     public static void removeGotoNext(MethodNode method) {
@@ -264,12 +264,6 @@ public class AsmUtil {
         }
 
         return -1;
-    }
-
-    public static void print(MethodNode method) {
-        for (var line : CodeString.compute(method.instructions)) {
-            System.out.println(line);
-        }
     }
 
     public static boolean isClassObfuscated(String name) {

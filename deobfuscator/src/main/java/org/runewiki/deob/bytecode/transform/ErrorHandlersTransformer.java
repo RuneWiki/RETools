@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.LdcInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.AsmUtil;
+import org.runewiki.deob.AsmUtil;
 
 import java.util.List;
 import java.util.Objects;

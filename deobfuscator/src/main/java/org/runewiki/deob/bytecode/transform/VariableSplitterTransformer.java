@@ -3,7 +3,7 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.AsmUtil;
+import org.runewiki.deob.AsmUtil;
 
 import java.util.*;
 

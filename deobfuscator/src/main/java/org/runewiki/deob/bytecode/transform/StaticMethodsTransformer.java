@@ -5,7 +5,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.StringConvertingMethodVisitor;
+import org.runewiki.deob.bytecode.StringConvertingMethodVisitor;
 
 import java.util.*;
 

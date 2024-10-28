@@ -6,7 +6,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.FieldNode;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.ZwyzDeobStep1;
+import org.tomlj.TomlParseResult;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -15,11 +15,20 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class SortFieldsNameTransformer extends Transformer {
+    private static boolean UNRELIABLE_CLASS_ORDER = false;
+
+    @Override
+    public void provide(TomlParseResult profile) {
+        super.provide(profile);
+
+        UNRELIABLE_CLASS_ORDER = Boolean.TRUE.equals(profile.getBoolean("profile.sort_fields.unreliable_class_order"));
+    }
+
     @Override
     public void transform(List<ClassNode> classes) {
         var names = (List<String>) new ArrayList<String>();
 
-        if (!ZwyzDeobStep1.UNRELIABLE_CLASS_ORDER) {
+        if (!UNRELIABLE_CLASS_ORDER) {
             // Compute obfuscated name order for this build based on class order
             for (var clazz : classes) {
                 var obfuscatedName = findObfuscatedName(clazz.invisibleAnnotations, clazz.visibleAnnotations);
@@ -33,7 +42,7 @@ public class SortFieldsNameTransformer extends Transformer {
             try {
                 names = Files.readAllLines(Path.of("obforder.txt"));
             } catch (IOException e) {
-                throw new UncheckedIOException(e);
+                names = new ArrayList<>();
             }
         }
 

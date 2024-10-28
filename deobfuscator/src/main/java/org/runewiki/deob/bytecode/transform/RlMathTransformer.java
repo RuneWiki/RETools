@@ -8,7 +8,7 @@ import net.runelite.deob.deobfuscators.arithmetic.MultiplyZeroDeobfuscator;
 import net.runelite.deob.util.RlJarUtil;
 import org.objectweb.asm.tree.ClassNode;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.JarUtil;
+import org.runewiki.deob.JarUtil;
 
 import java.io.File;
 import java.io.IOException;

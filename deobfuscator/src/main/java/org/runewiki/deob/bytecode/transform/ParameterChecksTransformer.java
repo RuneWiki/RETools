@@ -4,8 +4,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import zwyz.deob.AsmUtil;
-import zwyz.deob.ZwyzDeobStep1;
+import org.runewiki.deob.AsmUtil;
+import org.tomlj.TomlParseResult;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -13,12 +13,23 @@ import java.util.List;
 import java.util.Objects;
 
 public class ParameterChecksTransformer extends Transformer {
+    private static boolean RUNELITE = false;
+    private static boolean COMPLEX_PARAMETER_CHECKS = false;
+
+    @Override
+    public void provide(TomlParseResult profile) {
+        super.provide(profile);
+
+        RUNELITE = Boolean.TRUE.equals(profile.getBoolean("profile.parameter_checks.runelite"));
+        COMPLEX_PARAMETER_CHECKS = Boolean.TRUE.equals(profile.getBoolean("profile.parameter_checks.complex"));
+    }
+
     @Override
     public void transform(List<ClassNode> classes) {
         // scan for constants
         var exclude = new HashSet<String>();
 
-        if (ZwyzDeobStep1.COMPLEX_PARAMETER_CHECKS) {
+        if (COMPLEX_PARAMETER_CHECKS) {
             for (var clazz : classes) {
                 for (var method : clazz.methods) {
                     var instruction = method.instructions.getFirst();
@@ -31,7 +42,7 @@ public class ParameterChecksTransformer extends Transformer {
                             if (argumentTypes.length == 0) {
                                 exclude.add(mi.name);
                             } else {
-                                if (AsmUtil.isIntConstant(instruction.getPrevious()) || ZwyzDeobStep1.RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
+                                if (AsmUtil.isIntConstant(instruction.getPrevious()) || RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
                                     // could remove
                                 } else {
                                     exclude.add(mi.name);
@@ -81,7 +92,7 @@ public class ParameterChecksTransformer extends Transformer {
                         var argumentTypes = type.getArgumentTypes();
                         mi.desc = Type.getMethodType(type.getReturnType(), Arrays.copyOfRange(argumentTypes, 0, argumentTypes.length - 1)).getDescriptor();
 
-                        if (AsmUtil.isIntConstant(instruction.getPrevious()) || ZwyzDeobStep1.RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
+                        if (AsmUtil.isIntConstant(instruction.getPrevious()) || RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
                             method.instructions.remove(instruction.getPrevious());
                         } else {
                             throw new AssertionError();
@@ -129,7 +140,7 @@ public class ParameterChecksTransformer extends Transformer {
         }
 
         if (removed && kept) {
-            if (ZwyzDeobStep1.COMPLEX_PARAMETER_CHECKS) {
+            if (COMPLEX_PARAMETER_CHECKS) {
                 method.instructions = original.instructions;
                 return false; // revert
             } else {
@@ -181,7 +192,7 @@ public class ParameterChecksTransformer extends Transformer {
 
         var endLabel = ((JumpInsnNode) instruction).label;
 
-        if (!ZwyzDeobStep1.COMPLEX_PARAMETER_CHECKS) {
+        if (!COMPLEX_PARAMETER_CHECKS) {
             instruction = instruction.getNext();
             if (AsmUtil.isNew(instruction, "java/lang/IllegalStateException")) { // new java/lang/IllegalStateException
                 // dup
@@ -204,7 +215,7 @@ public class ParameterChecksTransformer extends Transformer {
             } else if (instruction.getOpcode() == Opcodes.RETURN) { // return
                 // ok
             } else {
-                if (!ZwyzDeobStep1.RUNELITE) {
+                if (!RUNELITE) {
                     return false;
                 }
             }

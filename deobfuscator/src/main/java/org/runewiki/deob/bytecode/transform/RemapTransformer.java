@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.FieldInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.runewiki.asm.transform.Transformer;
 import org.runewiki.deob.bytecode.remap.SimpleObfRemapper;
-import zwyz.deob.AsmUtil;
+import org.runewiki.deob.AsmUtil;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
