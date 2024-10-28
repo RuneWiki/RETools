@@ -242,7 +242,7 @@ public class AsmUtil {
         return argumentVariableIndex;
     }
 
-    static int getLoadedVar(AbstractInsnNode instruction) {
+    public static int getLoadedVar(AbstractInsnNode instruction) {
         if (instruction.getOpcode() == Opcodes.ILOAD || instruction.getOpcode() == Opcodes.LLOAD || instruction.getOpcode() == Opcodes.FLOAD || instruction.getOpcode() == Opcodes.DLOAD || instruction.getOpcode() == Opcodes.ALOAD) {
             return ((VarInsnNode) instruction).var;
         }
@@ -254,7 +254,7 @@ public class AsmUtil {
         return -1;
     }
 
-    static int getStoredVar(AbstractInsnNode instruction) {
+    public static int getStoredVar(AbstractInsnNode instruction) {
         if (instruction.getOpcode() == Opcodes.ISTORE || instruction.getOpcode() == Opcodes.LSTORE || instruction.getOpcode() == Opcodes.FSTORE || instruction.getOpcode() == Opcodes.DSTORE || instruction.getOpcode() == Opcodes.ASTORE) {
             return ((VarInsnNode) instruction).var;
         }

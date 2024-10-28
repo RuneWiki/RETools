@@ -30,18 +30,19 @@ public class ZwyzDeobStep1 {
         TRACK_MOVED = trackMoved;
 
         var classes = JarUtil.readClasses(INPUT);
-        if (RUNELITE) AnnotationRemover.run(classes);
-        if (RUNELITE) DeleteInvokeDynamic.run(classes);
-        AnnotateObfuscatedNames.annotate(classes);
-        UniqueRenamer.remap(classes);
-        if (RUNELITE) StaticInstanceMethods.run(classes);
-        var calledMethods = CalledMethods.run(classes);
+        if (RUNELITE) AnnotationRemover.run(classes); // done
+        if (RUNELITE) DeleteInvokeDynamic.run(classes); // done
+        AnnotateObfuscatedNames.annotate(classes); // done
+        UniqueRenamer.remap(classes); // sort of replaced
+        if (RUNELITE) StaticInstanceMethods.run(classes); // done
+
+        var calledMethods = CalledMethods.run(classes);  // done
         var obfuscatedMethods = new HashSet<String>();
         var unobfuscatedMethods = new HashSet<String>();
-        ErrorHandlers.run(classes, calledMethods, obfuscatedMethods, unobfuscatedMethods);
-        ParameterChecks.run(classes, obfuscatedMethods, unobfuscatedMethods);
-        if (RUNELITE) calledMethods = CalledMethods.run(classes); // param checks reference other methods on rl
-        GotoDeobfuscator.run(classes); // Undo goto obfuscation, so that matching statics can work properly
+        ErrorHandlers.run(classes, calledMethods, obfuscatedMethods, unobfuscatedMethods);  // done
+        ParameterChecks.run(classes, obfuscatedMethods, unobfuscatedMethods);  // done
+        if (RUNELITE) calledMethods = CalledMethods.run(classes); // param checks reference other methods on rl  // done
+        GotoDeobfuscator.run(classes); // Undo goto obfuscation, so that matching statics can work properly  // done
 
         var staticsClass = new ClassNode();
         staticsClass.version = RUNELITE ? Opcodes.V1_8 : Opcodes.V1_6;
@@ -62,13 +63,13 @@ public class ZwyzDeobStep1 {
             classes.add(movedAnnotationClass);
         }
 
-        StaticMethods.run(classes, calledMethods, obfuscatedMethods, staticsClass, movedAnnotationClass);
-        SortMethods.run(classes);
-        StaticFields.run(classes, staticsClass, movedAnnotationClass);
-        SortFieldsName.run(classes);
-        VariableSplitter.run(classes);
-        ExpressionSorter.run(classes);
-        if (SHOW_LINE_NUMBERS) LineNumberAdder.run(classes);
+        StaticMethods.run(classes, calledMethods, obfuscatedMethods, staticsClass, movedAnnotationClass);  // done
+        SortMethods.run(classes); // done
+        StaticFields.run(classes, staticsClass, movedAnnotationClass); // done
+        SortFieldsName.run(classes); // done
+        VariableSplitter.run(classes); // done
+        ExpressionSorter.run(classes); // done
+        if (SHOW_LINE_NUMBERS) LineNumberAdder.run(classes); // no need
 
         JarUtil.writeClasses(OUTPUT, classes);
     }

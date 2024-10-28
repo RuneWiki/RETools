@@ -18,6 +18,7 @@ public class BytecodeDeobfuscator {
     public BytecodeDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
 
+        // openrs2
         registerTransformer(new SortClassesLegacyTransformer());
         registerTransformer(new ExceptionTracingTransformer());
         registerTransformer(new MonitorTransformer());
@@ -29,6 +30,22 @@ public class BytecodeDeobfuscator {
         registerTransformer(new SortMethodsLineOrderTransformer());
         registerTransformer(new FernflowerExceptionTransformer());
         registerTransformer(new ExceptionObfuscationTransformer());
+
+        // zwyz
+        registerTransformer(new AnnotateObfuscatedNamesTransformer());
+        registerTransformer(new AnnotationRemoverTransformer());
+        registerTransformer(new CalledMethodsTransformer());
+        registerTransformer(new DeleteInvokeDynamicTransformer());
+        registerTransformer(new ErrorHandlersTransformer());
+        registerTransformer(new ExpressionSorterTransformer());
+        registerTransformer(new GotoDeobfuscatorTransformer());
+        registerTransformer(new ParameterChecksTransformer());
+        registerTransformer(new SortFieldsNameTransformer());
+        registerTransformer(new SortMethodsTransformer());
+        registerTransformer(new StaticFieldsTransformer());
+        registerTransformer(new StaticInstanceMethodsTransformer());
+        registerTransformer(new StaticMethodsTransformer());
+        registerTransformer(new VariableSplitterTransformer());
     }
 
     private void registerTransformer(Transformer transformer) {
