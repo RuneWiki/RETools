@@ -2,6 +2,8 @@ package org.runewiki.deob.ast;
 
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.printer.DefaultPrettyPrinter;
+import com.github.javaparser.printer.configuration.*;
 import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.*;
@@ -75,14 +77,25 @@ public class AstDeobfuscator {
 		var config = new ParserConfiguration();
         config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
         config.setSymbolResolver(new JavaSymbolSolver(solver));
-        if (Boolean.TRUE.equals(profile.getBoolean("profile.source.no_reformat"))) {
+
+        if (Boolean.TRUE.equals(profile.getBoolean("profile.source.preserve_format"))) {
             config.setLexicalPreservationEnabled(true);
         }
 
         SourceRoot root = new SourceRoot(Paths.get("src/main/java"), config);
-        if (Boolean.TRUE.equals(profile.getBoolean("profile.source.no_reformat"))) {
+
+        if (Boolean.TRUE.equals(profile.getBoolean("profile.source.preserve_format"))) {
             root.setPrinter(LexicalPreservingPrinter::print);
+        } else {
+            DefaultPrinterConfiguration prettyConfig = new DefaultPrinterConfiguration();
+            prettyConfig.addOption(new DefaultConfigurationOption(DefaultPrinterConfiguration.ConfigOption.INDENTATION, new Indentation(Indentation.IndentType.TABS_WITH_SPACE_ALIGN, 1)));
+            prettyConfig.addOption(new DefaultConfigurationOption(DefaultPrinterConfiguration.ConfigOption.INDENT_CASE_IN_SWITCH, false));
+            prettyConfig.addOption(new DefaultConfigurationOption(DefaultPrinterConfiguration.ConfigOption.ORDER_IMPORTS, true));
+
+            DefaultPrettyPrinter pretty = new DefaultPrettyPrinter(prettyConfig);
+            root.setPrinter(pretty::print);
         }
+
         root.tryToParseParallelized();
         List<CompilationUnit> compilations = root.getCompilationUnits();
 
