@@ -3,10 +3,7 @@ package org.runewiki.deob.ast;
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.ClassLoaderTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JarTypeSolver;
-import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
+import com.github.javaparser.symbolsolver.resolution.typesolvers.*;
 import com.github.javaparser.utils.SourceRoot;
 import org.runewiki.deob.ast.transform.*;
 import org.tomlj.TomlArray;
@@ -51,7 +48,6 @@ public class AstDeobfuscator {
     }
 
     private void registerAstTransformer(AstTransformer transformer) {
-        // System.out.println("Registered AST transformer: " + transformer.getName());
         this.allAstTransformers.put(transformer.getName(), transformer);
         transformer.provide(this.profile);
     }
@@ -60,17 +56,18 @@ public class AstDeobfuscator {
         System.out.println("---- Processing source code ----");
 
         var solver = new CombinedTypeSolver();
-
         TomlArray classpath = this.profile.getArray("profile.source.classpath");
         if (classpath != null) {
             for (int i = 0; i < classpath.size(); i++) {
                 try {
                     solver.add(new JarTypeSolver(classpath.getString(i)));
-                } catch (IOException ignore) {
+                } catch (IOException ex) {
+                    System.err.println("Failed to apply source classpath for: " + classpath.getString(i));
                 }
             }
         }
 
+        solver.add(new ReflectionTypeSolver(false));
         solver.add(new ClassLoaderTypeSolver(ClassLoader.getPlatformClassLoader()));
         solver.add(new JavaParserTypeSolver("src/main/java"));
 

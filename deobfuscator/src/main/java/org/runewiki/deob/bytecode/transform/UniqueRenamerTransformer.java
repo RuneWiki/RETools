@@ -97,6 +97,7 @@ public class UniqueRenamerTransformer extends Transformer {
         classes.addAll(remappedClasses);
     }
 
+    // todo: don't link static fields in classes that may share a name with a class that inherits it
     private static Map<String, Set<String>> computeLinkedFields(List<ClassNode> classes, Map<String, Set<String>> inheriting) {
         var classesByName = new HashMap<String, ClassNode>();
 
