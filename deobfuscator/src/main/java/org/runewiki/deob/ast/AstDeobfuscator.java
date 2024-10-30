@@ -75,7 +75,7 @@ public class AstDeobfuscator {
         solver.add(new JavaParserTypeSolver("src/main/java"));
 
 		var config = new ParserConfiguration();
-        config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
+        config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_11);
         config.setSymbolResolver(new JavaSymbolSolver(solver));
 
         if (Boolean.TRUE.equals(profile.getBoolean("profile.source.preserve_format"))) {
@@ -96,18 +96,26 @@ public class AstDeobfuscator {
             root.setPrinter(pretty::print);
         }
 
-        root.tryToParseParallelized();
-        List<CompilationUnit> compilations = root.getCompilationUnits();
+        var results = root.tryToParseParallelized();
+        for (var result : results) {
+            if (!result.isSuccessful()) {
+                for (var problem : result.getProblems()) {
+                    System.err.println(problem.toString());
+                }
+            }
+        }
 
         TomlArray astTransformers = this.profile.getArray("profile.source.transformers");
         if (astTransformers != null) {
+            List<CompilationUnit> units = root.getCompilationUnits();
+
             for (int i = 0; i < astTransformers.size(); i++) {
                 String name = astTransformers.getString(i);
 
                 AstTransformer transformer = this.allAstTransformers.get(name);
                 if (transformer != null) {
                     System.out.println("Applying " + name + " source transformer");
-                    transformer.transform(compilations);
+                    transformer.transform(units);
                 } else {
                     System.err.println("Unknown AST transformer: " + name);
                 }
