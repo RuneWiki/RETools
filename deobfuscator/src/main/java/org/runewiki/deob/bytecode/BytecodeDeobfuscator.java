@@ -55,7 +55,7 @@ public class BytecodeDeobfuscator {
     }
 
     public void run(List<ClassNode> classes) throws IOException {
-        System.out.println("---- Deobfuscating ----");
+        System.out.println("---- Processing bytecode ----");
 
         TomlArray transformers = this.profile.getArray("profile.deob.transformers");
         if (transformers != null) {
@@ -73,7 +73,7 @@ public class BytecodeDeobfuscator {
         }
 
         if (Boolean.TRUE.equals(profile.getBoolean("profile.remap.enable"))) {
-            System.out.println("---- Remapping ----");
+            System.out.println("---- Remapping classes ----");
             Transformer remap = new RemapTransformer();
             remap.provide(this.profile);
             remap.transform(classes);

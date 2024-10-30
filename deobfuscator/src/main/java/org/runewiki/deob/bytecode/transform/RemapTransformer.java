@@ -49,14 +49,14 @@ public class RemapTransformer extends Transformer {
         var intermediaryMappings = new HashMap<String, String>();
 
         for (var clazz : classes) {
-            var classMapping = mappings.get(findObfuscatedName(clazz.visibleAnnotations, clazz.name));
+            var classMapping = mappings.get(findObfuscatedName(clazz.visibleAnnotations, clazz.invisibleAnnotations, clazz.name));
             var className = classMapping != null ? classMapping : clazz.name;
             var pkgName = className.substring(0, className.lastIndexOf('/') + 1);
 
             intermediaryMappings.put(clazz.name, pkgName.isEmpty() ? defaultPkg + "/" + className : className);
 
             for (var field : clazz.fields) {
-                var fieldMapping = mappings.get(findObfuscatedName(field.visibleAnnotations, field.name));
+                var fieldMapping = mappings.get(findObfuscatedName(field.visibleAnnotations, field.invisibleAnnotations, field.name));
 
                 if (fieldMapping != null) {
                     intermediaryMappings.put(field.name, fieldMapping);
@@ -64,7 +64,7 @@ public class RemapTransformer extends Transformer {
             }
 
             for (var method : clazz.methods) {
-                var methodMapping = mappings.get(findObfuscatedName(method.visibleAnnotations, method.name));
+                var methodMapping = mappings.get(findObfuscatedName(method.visibleAnnotations, method.invisibleAnnotations, method.name));
 
                 if (methodMapping != null) {
                     intermediaryMappings.put(method.name, methodMapping);
@@ -72,15 +72,9 @@ public class RemapTransformer extends Transformer {
             }
         }
 
-        if (defaultPkg.endsWith("deob")) {
-            intermediaryMappings.put("statics", defaultPkg + "/Statics");
-            intermediaryMappings.put("ObfuscatedName", defaultPkg + "/ObfuscatedName");
-            intermediaryMappings.put("Moved", defaultPkg + "/Moved");
-        } else {
-            intermediaryMappings.put("statics", defaultPkg + "/deob/Statics");
-            intermediaryMappings.put("ObfuscatedName", defaultPkg + "/deob/ObfuscatedName");
-            intermediaryMappings.put("Moved", defaultPkg + "/deob/Moved");
-        }
+        intermediaryMappings.put("Statics", "deob/Statics");
+        intermediaryMappings.put("ObfuscatedName", "deob/ObfuscatedName");
+        intermediaryMappings.put("Moved", "deob/Moved");
 
         // Move statics
         var newOwners = new HashMap<String, String>();
@@ -91,12 +85,7 @@ public class RemapTransformer extends Transformer {
             if (value.contains(",")) {
                 var parts = value.split(",");
                 newOwners.put(key, parts[0]);
-
-                if (!value.endsWith(",")) {
-                    intermediaryMappings.put(key, parts[1]);
-                } else {
-                    intermediaryMappings.remove(key);
-                }
+                intermediaryMappings.put(key, parts[1]);
             }
         }
 
@@ -236,7 +225,7 @@ public class RemapTransformer extends Transformer {
         var classesByName = new HashMap<String, ClassNode>();
 
         for (var clazz : classes) {
-            classesByName.put(findObfuscatedName(clazz.visibleAnnotations, clazz.name), clazz);
+            classesByName.put(findObfuscatedName(clazz.visibleAnnotations, clazz.invisibleAnnotations, clazz.name), clazz);
         }
 
         // Move members
@@ -244,23 +233,28 @@ public class RemapTransformer extends Transformer {
             for (var field : new ArrayList<>(clazz.fields)) {
                 if (newOwners.containsKey(field.name)) {
                     if ((field.access & Opcodes.ACC_STATIC) == 0) {
-                        throw new IllegalStateException("tried to move non-static field " + findObfuscatedName(field.visibleAnnotations, field.name));
+                        throw new IllegalStateException("tried to move non-static field " + findObfuscatedName(field.visibleAnnotations, field.invisibleAnnotations, field.name));
                     }
 
-                    clazz.fields.remove(field);
-                    classesByName.get(newOwners.get(field.name)).fields.add(field);
+                    var owner = classesByName.get(newOwners.get(field.name));
+                    if (owner != null) {
+                        clazz.fields.remove(field);
+                        owner.fields.add(field);
+                    }
                 }
             }
 
             for (var method : new ArrayList<>(clazz.methods)) {
                 if (newOwners.containsKey(method.name)) {
-
                     if ((method.access & Opcodes.ACC_STATIC) == 0) {
-                        throw new IllegalStateException("tried to move non-static method " + findObfuscatedName(method.visibleAnnotations, method.name));
+                        throw new IllegalStateException("tried to move non-static method " + findObfuscatedName(method.visibleAnnotations, method.invisibleAnnotations, method.name));
                     }
 
-                    clazz.methods.remove(method);
-                    classesByName.get(newOwners.get(method.name)).methods.add(method);
+                    var owner = classesByName.get(newOwners.get(method.name));
+                    if (owner != null) {
+                        clazz.methods.remove(method);
+                        owner.methods.add(method);
+                    }
                 }
             }
         }
@@ -270,25 +264,41 @@ public class RemapTransformer extends Transformer {
             for (var method : clazz.methods) {
                 for (var instruction : method.instructions) {
                     if (instruction instanceof FieldInsnNode fieldInsn && newOwners.containsKey(fieldInsn.name)) {
-                        fieldInsn.owner = classesByName.get(newOwners.get(fieldInsn.name)).name;
+                        var owner = classesByName.get(newOwners.get(fieldInsn.name));
+                        if (owner != null) {
+                            fieldInsn.owner = owner.name;
+                        }
                     }
 
                     if (instruction instanceof MethodInsnNode methodInsn && newOwners.containsKey(methodInsn.name)) {
-                        methodInsn.owner = classesByName.get(newOwners.get(methodInsn.name)).name;
+                        var owner = classesByName.get(newOwners.get(methodInsn.name));
+                        if (owner != null) {
+                            methodInsn.owner = owner.name;
+                        }
                     }
                 }
             }
         }
     }
 
-    private static String findObfuscatedName(List<AnnotationNode> annotations, String name) {
-        if (annotations == null) {
+    private static String findObfuscatedName(List<AnnotationNode> visibleAnnotations, List<AnnotationNode> invisibleAnnotations, String name) {
+        if (visibleAnnotations == null && invisibleAnnotations == null) {
             return name;
         }
 
-        for (var annotation : annotations) {
-            if (annotation.desc.equals("LObfuscatedName;")) {
-                return (String) annotation.values.get(1);
+        if (visibleAnnotations != null) {
+            for (var annotation : visibleAnnotations) {
+                if (annotation.desc.equals("LObfuscatedName;")) {
+                    return (String) annotation.values.get(1);
+                }
+            }
+        }
+
+        if (invisibleAnnotations != null) {
+            for (var annotation : invisibleAnnotations) {
+                if (annotation.desc.equals("LObfuscatedName;")) {
+                    return (String) annotation.values.get(1);
+                }
             }
         }
 

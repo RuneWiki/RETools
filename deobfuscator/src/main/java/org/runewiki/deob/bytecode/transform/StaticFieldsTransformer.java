@@ -63,7 +63,7 @@ public class StaticFieldsTransformer extends Transformer {
                 continue;
             }
 
-            if (clazz.name.equals("statics")) {
+            if (clazz.name.equals("Statics")) {
                 continue;
             }
 

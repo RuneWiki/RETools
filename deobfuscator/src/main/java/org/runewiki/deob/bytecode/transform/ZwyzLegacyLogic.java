@@ -22,8 +22,8 @@ public class ZwyzLegacyLogic {
     static {
         staticsClass.version = Opcodes.V1_6; // todo: RUNELITE ? Opcodes.V1_8 : Opcodes.V1_6;
         staticsClass.access = Opcodes.ACC_PUBLIC;
-        staticsClass.name = "statics";
+        staticsClass.name = "Statics";
         staticsClass.superName = "java/lang/Object";
-        staticsClass.sourceFile = "statics.java";
+        staticsClass.sourceFile = "Statics.java";
     }
 }

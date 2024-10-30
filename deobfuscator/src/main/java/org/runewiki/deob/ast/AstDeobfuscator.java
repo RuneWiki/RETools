@@ -26,6 +26,10 @@ public class AstDeobfuscator {
     public AstDeobfuscator(TomlParseResult profile) {
         this.profile = profile;
 
+        registerAstTransformer(new ProduceMapTransformer());
+
+        // todo: GlTransformer
+        // openrs2
         registerAstTransformer(new AddSubTransformer());
         registerAstTransformer(new BinaryExprOrderTransformer());
         registerAstTransformer(new BitMaskTransformer());
@@ -33,7 +37,6 @@ public class AstDeobfuscator {
         registerAstTransformer(new ComplementTransformer());
         registerAstTransformer(new EncloseTransformer());
         registerAstTransformer(new ForLoopConditionTransformer());
-//        registerAstTransformer(new GlTransformer());
         registerAstTransformer(new HexLiteralTransformer());
         registerAstTransformer(new IdentityTransformer());
         registerAstTransformer(new IfElseTransformer());
@@ -53,8 +56,8 @@ public class AstDeobfuscator {
         transformer.provide(this.profile);
     }
 
-    public void run() {
-        System.out.println("---- Deobfuscating AST ----");
+    public void run(boolean save) {
+        System.out.println("---- Processing source code ----");
 
         var solver = new CombinedTypeSolver();
 
@@ -86,7 +89,7 @@ public class AstDeobfuscator {
 
                 AstTransformer transformer = this.allAstTransformers.get(name);
                 if (transformer != null) {
-                    System.out.println("Applying " + name + " AST transformer");
+                    System.out.println("Applying " + name + " source transformer");
                     transformer.transform(compilations);
                 } else {
                     System.err.println("Unknown AST transformer: " + name);
@@ -94,6 +97,8 @@ public class AstDeobfuscator {
             }
         }
 
-        root.saveAll();
+        if (save) {
+            root.saveAll();
+        }
     }
 }
