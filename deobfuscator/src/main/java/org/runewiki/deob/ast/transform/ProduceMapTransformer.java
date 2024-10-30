@@ -55,7 +55,11 @@ public class ProduceMapTransformer extends AstTransformer {
                 return;
             }
 
-            result += originalName + "=" + annotation.getNameAsString() + "\n";
+            if (pkgName.get() != null) {
+                result += originalName + "=" + pkgName + "." + annotation.getNameAsString() + "\n";
+            } else {
+                result += originalName + "=" + annotation.getNameAsString() + "\n";
+            }
         });
 
         // todo: detect inner classes
@@ -65,13 +69,7 @@ public class ProduceMapTransformer extends AstTransformer {
             }*/
 
             String foundClass = getOriginalName(clazz.getAnnotations());
-            if (foundClass == null) {
-                foundClass = clazz.getNameAsString();
-
-                if (pkgName.get() != null) {
-                    result += foundClass + "=" + pkgName + "." + clazz.getNameAsString() + "\n";
-                }
-            } else {
+            if (foundClass != null) {
                 String newClass;
                 if (pkgName.get() != null) {
                     newClass = pkgName + "." + clazz.getNameAsString();
@@ -80,7 +78,13 @@ public class ProduceMapTransformer extends AstTransformer {
                 }
 
                 result += foundClass + "=" + newClass + "\n";
-            }
+            } /* else {
+                foundClass = clazz.getNameAsString();
+
+                if (pkgName.get() != null) {
+                    result += foundClass + "=" + pkgName + "." + clazz.getNameAsString() + "\n";
+                }
+            } */
 
             final String originalClass = foundClass;
 
