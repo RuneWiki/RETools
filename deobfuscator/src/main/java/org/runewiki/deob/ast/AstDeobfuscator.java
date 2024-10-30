@@ -2,6 +2,7 @@ package org.runewiki.deob.ast;
 
 import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.printer.lexicalpreservation.LexicalPreservingPrinter;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.*;
 import com.github.javaparser.utils.SourceRoot;
@@ -74,8 +75,14 @@ public class AstDeobfuscator {
 		var config = new ParserConfiguration();
         config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_6);
         config.setSymbolResolver(new JavaSymbolSolver(solver));
+        if (Boolean.TRUE.equals(profile.getBoolean("profile.source.no_reformat"))) {
+            config.setLexicalPreservationEnabled(true);
+        }
 
         SourceRoot root = new SourceRoot(Paths.get("src/main/java"), config);
+        if (Boolean.TRUE.equals(profile.getBoolean("profile.source.no_reformat"))) {
+            root.setPrinter(LexicalPreservingPrinter::print);
+        }
         root.tryToParseParallelized();
         List<CompilationUnit> compilations = root.getCompilationUnits();
 
