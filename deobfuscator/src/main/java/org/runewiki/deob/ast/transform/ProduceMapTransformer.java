@@ -2,6 +2,7 @@ package org.runewiki.deob.ast.transform;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.PackageDeclaration;
+import com.github.javaparser.ast.body.AnnotationDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.expr.AnnotationExpr;
 import com.github.javaparser.ast.expr.NormalAnnotationExpr;
@@ -48,25 +49,40 @@ public class ProduceMapTransformer extends AstTransformer {
             pkgName.set(pkg.getNameAsString());
         });
 
+        walk(unit, AnnotationDeclaration.class, annotation -> {
+            String originalName = getOriginalName(annotation.getAnnotations());
+            if (originalName == null) {
+                return;
+            }
+
+            result += originalName + "=" + annotation.getNameAsString() + "\n";
+        });
+
         // todo: detect inner classes
         walk(unit, ClassOrInterfaceDeclaration.class, clazz -> {
             /*if (clazz.getNameAsString().startsWith("class")) {
                 return;
             }*/
 
-            String originalClass = getOriginalName(clazz.getAnnotations());
-            if (originalClass == null) {
-                return;
-            }
+            String foundClass = getOriginalName(clazz.getAnnotations());
+            if (foundClass == null) {
+                foundClass = clazz.getNameAsString();
 
-            String newClass;
-            if (pkgName.get() != null) {
-                newClass = pkgName + "." + clazz.getNameAsString();
+                if (pkgName.get() != null) {
+                    result += foundClass + "=" + pkgName + "." + clazz.getNameAsString() + "\n";
+                }
             } else {
-                newClass = clazz.getNameAsString();
+                String newClass;
+                if (pkgName.get() != null) {
+                    newClass = pkgName + "." + clazz.getNameAsString();
+                } else {
+                    newClass = clazz.getNameAsString();
+                }
+
+                result += foundClass + "=" + newClass + "\n";
             }
 
-            result += originalClass + "=" + newClass + "\n";
+            final String originalClass = foundClass;
 
             clazz.getFields().forEach(field -> {
                 String fieldName = field.getVariables().get(0).getNameAsString();
