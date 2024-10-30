@@ -65,7 +65,7 @@ public class StaticMethodsTransformer extends Transformer {
         for (var clazz : classes) {
             for (var method : clazz.methods) {
                 if (method.name.startsWith("method") && (method.access & Opcodes.ACC_STATIC) != 0 && ZwyzLegacyLogic.obfuscatedMethods.contains(method.name)) {
-                    realOwners.putIfAbsent(method.name, "deob/statics");
+                    realOwners.putIfAbsent(method.name, "statics");
                 }
             }
         }

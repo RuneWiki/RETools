@@ -13,6 +13,7 @@ public class AnnotationRemoverTransformer extends Transformer {
     public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
         removeAnnotations(clazz.invisibleAnnotations);
         removeAnnotations(clazz.visibleAnnotations);
+
         return false;
     }
 
@@ -20,6 +21,7 @@ public class AnnotationRemoverTransformer extends Transformer {
     public boolean transformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
         removeAnnotations(method.invisibleAnnotations);
         removeAnnotations(method.visibleAnnotations);
+
         return false;
     }
 
@@ -27,6 +29,7 @@ public class AnnotationRemoverTransformer extends Transformer {
     public boolean transformField(List<ClassNode> classes, ClassNode clazz, FieldNode field) {
         removeAnnotations(field.invisibleAnnotations);
         removeAnnotations(field.visibleAnnotations);
+
         return false;
     }
 

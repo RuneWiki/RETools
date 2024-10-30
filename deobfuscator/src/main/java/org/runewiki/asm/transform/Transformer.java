@@ -89,7 +89,4 @@ public class Transformer {
 
     public void postTransform(List<ClassNode> classes) {
     }
-
-    public void finalTransform(List<ClassNode> classes) {
-    }
 }

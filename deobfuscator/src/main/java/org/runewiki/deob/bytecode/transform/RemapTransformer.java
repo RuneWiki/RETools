@@ -2,24 +2,18 @@ package org.runewiki.deob.bytecode.transform;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.commons.ClassRemapper;
-import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldInsnNode;
-import org.objectweb.asm.tree.InnerClassNode;
-import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.commons.Remapper;
+import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import org.runewiki.deob.bytecode.remap.SimpleObfRemapper;
-import org.runewiki.deob.AsmUtil;
 import org.tomlj.TomlParseResult;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class RemapTransformer extends Transformer {
     private static String mappingFile = "remap.txt";
-    private static String defaultPackage = "deob";
+    private static String defaultPkg = "deob";
 
     @Override
     public void provide(TomlParseResult profile) {
@@ -27,125 +21,141 @@ public class RemapTransformer extends Transformer {
 
         String file = profile.getString("profile.remap.file");
         if (file != null) {
-            mappingFile = file;
+            mappingFile = file.replaceAll("\\.", "/");
         }
 
         String pkg = profile.getString("profile.remap.default_package");
         if (pkg != null) {
-            defaultPackage = pkg;
+            defaultPkg = pkg;
         }
     }
 
     @Override
     public void transform(List<ClassNode> classes) {
-        var inheriting = computeInheritance(classes);
-        var linkedMethods = computeLinkedMethods(classes, inheriting);
-        var linkedFields = computeLinkedFields(classes, inheriting);
+        var mappings = new HashMap<String, String>();
 
-        var remap = new HashMap<String, String>();
-        var classCounter = 0;
-        var fieldCounter = 0;
-        var methodCounter = 0;
+        try {
+            for (var line : Files.readAllLines(Path.of(mappingFile))) {
+                if (line.contains("#")) line = line.split("#")[0];
+                line = line.trim();
+                if (line.isBlank() || line.endsWith("=")) continue;
+                if (!line.split("=")[0].contains(".")) line = line.replace(".", "/");
+                mappings.put(line.split("=")[0], line.split("=")[1]);
+            }
+        } catch (Exception ex) {
+            System.err.println("Failed to read mapping file: " + mappingFile);
+        }
+
+        var intermediaryMappings = new HashMap<String, String>();
 
         for (var clazz : classes) {
-            var packageName = clazz.name.substring(0, clazz.name.lastIndexOf('/') + 1);
-            var className = clazz.name.substring(clazz.name.lastIndexOf('/') + 1);
+            var classMapping = mappings.get(findObfuscatedName(clazz.visibleAnnotations, clazz.name));
+            var className = classMapping != null ? classMapping : clazz.name;
+            var pkgName = className.substring(0, className.lastIndexOf('/') + 1);
 
-            if (AsmUtil.isClassObfuscated(className)) {
-                className = packageName + "class" + ++classCounter;
-                remap.put(clazz.name, packageName.isEmpty() ? (defaultPackage + "/" + className) : className);
-            } else {
-                remap.put(clazz.name, packageName.isEmpty() ? (defaultPackage + "/" + clazz.name) : clazz.name);
-            }
+            intermediaryMappings.put(clazz.name, pkgName.isEmpty() ? defaultPkg + "/" + className : className);
 
             for (var field : clazz.fields) {
-                if (AsmUtil.isFieldObfuscated(field.name)) {
-                    var key = clazz.name + "." + field.name + field.desc;
-                    var newName = "field" + ++fieldCounter;
+                var fieldMapping = mappings.get(findObfuscatedName(field.visibleAnnotations, field.name));
 
-                    for (var linked : linkedFields.getOrDefault(key, Set.of(key))) {
-                        remap.put(linked, newName);
-                    }
+                if (fieldMapping != null) {
+                    intermediaryMappings.put(field.name, fieldMapping);
                 }
             }
 
             for (var method : clazz.methods) {
-                if (AsmUtil.isMethodObfuscated(method.name)) {
-                    var key = clazz.name + "." + method.name + method.desc;
+                var methodMapping = mappings.get(findObfuscatedName(method.visibleAnnotations, method.name));
 
-                    if (!remap.containsKey(key)) {
-                        var renamed = "method" + ++methodCounter;
-
-                        for (var linked : linkedMethods.getOrDefault(key, Set.of(key))) {
-                            remap.put(linked, renamed);
-                        }
-                    }
+                if (methodMapping != null) {
+                    intermediaryMappings.put(method.name, methodMapping);
                 }
             }
         }
 
+        if (defaultPkg.endsWith("deob")) {
+            intermediaryMappings.put("statics", defaultPkg + "/Statics");
+            intermediaryMappings.put("ObfuscatedName", defaultPkg + "/ObfuscatedName");
+            intermediaryMappings.put("Moved", defaultPkg + "/Moved");
+        } else {
+            intermediaryMappings.put("statics", defaultPkg + "/deob/Statics");
+            intermediaryMappings.put("ObfuscatedName", defaultPkg + "/deob/ObfuscatedName");
+            intermediaryMappings.put("Moved", defaultPkg + "/deob/Moved");
+        }
+
+        // Move statics
         var newOwners = new HashMap<String, String>();
 
-        // load existing mappings and merge
-        try {
-            Path path = Paths.get(mappingFile);
-            if (Files.exists(path)) {
-                Files.lines(path).forEach(line -> {
-                    String[] parts = line.split("=");
+        for (var key : new HashSet<>(intermediaryMappings.keySet())) {
+            var value = intermediaryMappings.get(key);
 
-                    var oldFqn = parts[0];
-                    var newName = parts[1];
+            if (value.contains(",")) {
+                var parts = value.split(",");
+                newOwners.put(key, parts[0]);
 
-                    // moving members to a new class
-                    if (oldFqn.contains(".") && newName.contains(".")) {
-                        // format: oldclass.member=newclass.member
-                        var owner = newName.substring(0, newName.lastIndexOf("."));
-                        newName = newName.substring(newName.lastIndexOf(".") + 1);
-                        newOwners.put(oldFqn, owner);
-                    } else if (newName.contains(",")) {
-                        // alternate format: oldclass.member=member,newclass
-                        var owner = newName.substring(newName.lastIndexOf(",") + 1);
-                        newName = newName.substring(0, newName.lastIndexOf(","));
-                        newOwners.put(oldFqn, owner);
-                    }
-
-                    remap.put(oldFqn, newName);
-                });
+                if (!value.endsWith(",")) {
+                    intermediaryMappings.put(key, parts[1]);
+                } else {
+                    intermediaryMappings.remove(key);
+                }
             }
-        } catch (IOException ex) {
-            ex.printStackTrace();
         }
 
-        // save combined mappings to file
-        /*try {
-            Path path = Paths.get("remap.txt");
-            BufferedWriter writer = Files.newBufferedWriter(path);
+        moveStatics(classes, newOwners);
 
-            List<String> keys = new ArrayList<>(remap.keySet());
-            for (String key : keys) {
-                writer.write(key + "=" + remap.get(key));
-                writer.newLine();
-            }
+        // Re-sort by line numbers after moving statics and inners
+        new SortMethodsTransformer().transform(classes);
+        new SortFieldsNameTransformer().transform(classes);
 
-            writer.close();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }*/
-
-        var remapper = new SimpleObfRemapper(remap);
-        var remappedClasses = new ArrayList<ClassNode>();
+        // Remap
+        var mappedClasses = new ArrayList<ClassNode>();
 
         for (var clazz : classes) {
-            var remapped = new ClassNode();
-            clazz.accept(new ClassRemapper(remapped, remapper));
-            remappedClasses.add(remapped);
+            var mappedClass = new ClassNode();
+
+            clazz.accept(new ClassRemapper(mappedClass, new Remapper() {
+                @Override
+                public String map(String name) {
+                    return intermediaryMappings.getOrDefault(name, name);
+                }
+
+                @Override
+                public String mapMethodName(String owner, String name, String descriptor) {
+                    if (name.startsWith("method")) {
+                        return intermediaryMappings.getOrDefault(name, name);
+                    } else {
+                        return name;
+                    }
+                }
+
+                @Override
+                public String mapInvokeDynamicMethodName(String name, String descriptor) {
+                    if (name.startsWith("method")) {
+                        return intermediaryMappings.getOrDefault(name, name);
+                    } else {
+                        return name;
+                    }
+                }
+
+                @Override
+                public String mapAnnotationAttributeName(String descriptor, String name) {
+                    return intermediaryMappings.getOrDefault(name, name);
+                }
+
+                @Override
+                public String mapFieldName(String owner, String name, String descriptor) {
+                    if (name.startsWith("field")) {
+                        return intermediaryMappings.getOrDefault(name, name);
+                    } else {
+                        return name;
+                    }
+                }
+            }));
+
+            mappedClasses.add(mappedClass);
         }
 
-        classes.clear();
-        classes.addAll(remappedClasses);
-        moveStatics(classes, newOwners, remapper);
-
-        for (var clazz : remappedClasses) {
+        // Set source file info
+        for (var clazz : mappedClasses) {
             var fileName = clazz.name;
 
             if (fileName.contains("$")) {
@@ -159,7 +169,7 @@ public class RemapTransformer extends Transformer {
         var innerClasses = new HashMap<String, List<String>>();
         var innerClassesAccess = new HashMap<String, Integer>();
 
-        for (var clazz : remappedClasses) {
+        for (var clazz : mappedClasses) {
             var lastInnerIndex = clazz.name.lastIndexOf('$');
 
             if (lastInnerIndex != -1) {
@@ -177,7 +187,7 @@ public class RemapTransformer extends Transformer {
             innerClassesAccess.put(clazz.name, access);
         }
 
-        for (var clazz : remappedClasses) {
+        for (var clazz : mappedClasses) {
             var inner = innerClasses.get(clazz.name);
 
             if (inner != null) {
@@ -195,152 +205,62 @@ public class RemapTransformer extends Transformer {
                 }
             }
         }
-    }
 
-    private static Map<String, Set<String>> computeLinkedFields(List<ClassNode> classes, Map<String, Set<String>> inheriting) {
-        var classesByName = new HashMap<String, ClassNode>();
+        // Make everything public (for now)
+        for (var clazz : mappedClasses) {
+            clazz.access &= ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
+            clazz.access |= Opcodes.ACC_PUBLIC;
 
-        for (var clazz : classes) {
-            classesByName.put(clazz.name, clazz);
-        }
+            for (var field : clazz.fields) {
+                field.access &= ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
+                field.access |= Opcodes.ACC_PUBLIC;
+            }
 
-        var result = new LinkedHashMap<String, Set<String>>();
-
-        for (var clazz : classes) {
-            for (var inheritedName : inheriting.get(clazz.name)) {
-                var inheritedClass = classesByName.get(inheritedName);
-
-                if (inheritedClass != null) {
-                    for (var field : inheritedClass.fields) {
-                        if ((field.access & Opcodes.ACC_PRIVATE) == 0) {
-                            var superFieldName = inheritedClass.name + "." + field.name + field.desc;
-                            var fieldName = clazz.name + "." + field.name + field.desc;
-
-                            merge(result, superFieldName, fieldName);
-                        }
-                    }
-                }
+            for (var method : clazz.methods) {
+                method.access &= ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED);
+                method.access |= Opcodes.ACC_PUBLIC;
             }
         }
 
-        return result;
-    }
-
-    public static Map<String, Set<String>> computeLinkedMethods(Collection<ClassNode> classes, Map<String, Set<String>> inheriting) {
-        var classesByName = new HashMap<String, ClassNode>();
-
-        for (var clazz : classes) {
-            classesByName.put(clazz.name, clazz);
-        }
-
-        var result = new LinkedHashMap<String, Set<String>>();
-
-        for (var clazz : classes) {
-            for (var inheritedName : inheriting.get(clazz.name)) {
-                var inheritedClass = classesByName.get(inheritedName);
-
-                if (inheritedClass != null) {
-                    for (var method : inheritedClass.methods) {
-                        if ((method.access & Opcodes.ACC_PRIVATE) == 0 && !method.name.equals("<init>")) {
-                            var superMethodName = inheritedClass.name + "." + method.name + method.desc;
-                            var methodName = clazz.name + "." + method.name + method.desc;
-
-                            merge(result, superMethodName, methodName);
-                        }
-                    }
-                }
+        for (var clazz : mappedClasses) {
+            if (clazz.name.endsWith("Statics")) {
+                clazz.fields.sort(Comparator.comparing(f -> f.name));
             }
         }
 
-        return result;
+        classes.clear();
+        classes.addAll(mappedClasses);
     }
 
-    public static Map<String, Set<String>> computeInheritance(Collection<ClassNode> classes) {
-        var inheriting = new HashMap<String, Set<String>>();
-
-        for (var clazz : classes) {
-            var set = inheriting.computeIfAbsent(clazz.name, k -> new LinkedHashSet<>());
-
-            set.add(clazz.name);
-            set.add(clazz.superName);
-            set.addAll(clazz.interfaces);
-        }
-
-        return transitiveClosure(inheriting);
-    }
-
-    private static <T> void merge(LinkedHashMap<T, Set<T>> map, T a, T b) {
-        var merged = new LinkedHashSet<T>();
-        merged.addAll(map.getOrDefault(a, Set.of(a)));
-        merged.addAll(map.getOrDefault(b, Set.of(b)));
-
-        for (var o : merged) {
-            map.put(o, merged);
-        }
-    }
-
-    private static <T> Map<T, Set<T>> transitiveClosure(Map<T, Set<T>> map) {
-        var result = new LinkedHashMap<T, Set<T>>();
-
-        for (var key : map.keySet()) {
-            result.put(key, descendants(map, key));
-        }
-
-        return result;
-    }
-
-    private static <T> Set<T> descendants(Map<T, Set<T>> ts, T t) {
-        var result = new LinkedHashSet<T>();
-        collectDescendants(ts, t, result);
-        return result;
-    }
-
-    private static <T> void collectDescendants(Map<T, Set<T>> ts, T t, Set<T> result) {
-        result.add(t);
-
-        for (var child : ts.getOrDefault(t, Set.of())) {
-            if (!result.contains(child)) {
-                collectDescendants(ts, child, result);
-            }
-        }
-    }
-
-    // todo: move static initializers from <clinit> to new class
-    private static void moveStatics(List<ClassNode> classes, HashMap<String, String> newOwners, SimpleObfRemapper remapper) {
-        if (newOwners.isEmpty()) {
-            return;
-        }
-
+    private static void moveStatics(List<ClassNode> classes, HashMap<String, String> newOwners) {
         var classesByName = new HashMap<String, ClassNode>();
+
         for (var clazz : classes) {
-            classesByName.put(remapper.reverse.get(clazz.name), clazz);
+            classesByName.put(findObfuscatedName(clazz.visibleAnnotations, clazz.name), clazz);
         }
 
         // Move members
         for (var clazz : classes) {
             for (var field : new ArrayList<>(clazz.fields)) {
-                var fqn = remapper.reverse.get(clazz.name + "." + field.name + field.desc);
-
-                if (newOwners.containsKey(fqn)) {
+                if (newOwners.containsKey(field.name)) {
                     if ((field.access & Opcodes.ACC_STATIC) == 0) {
-                        throw new IllegalStateException("tried to move non-static field " + fqn);
+                        throw new IllegalStateException("tried to move non-static field " + findObfuscatedName(field.visibleAnnotations, field.name));
                     }
 
                     clazz.fields.remove(field);
-                    classesByName.get(newOwners.get(fqn)).fields.add(field);
+                    classesByName.get(newOwners.get(field.name)).fields.add(field);
                 }
             }
 
             for (var method : new ArrayList<>(clazz.methods)) {
-                var fqn = remapper.reverse.get(clazz.name + "." + method.name + method.desc);
+                if (newOwners.containsKey(method.name)) {
 
-                if (newOwners.containsKey(fqn)) {
                     if ((method.access & Opcodes.ACC_STATIC) == 0) {
-                        throw new IllegalStateException("tried to move non-static method " + fqn);
+                        throw new IllegalStateException("tried to move non-static method " + findObfuscatedName(method.visibleAnnotations, method.name));
                     }
 
                     clazz.methods.remove(method);
-                    classesByName.get(newOwners.get(fqn)).methods.add(method);
+                    classesByName.get(newOwners.get(method.name)).methods.add(method);
                 }
             }
         }
@@ -349,22 +269,29 @@ public class RemapTransformer extends Transformer {
         for (var clazz : classes) {
             for (var method : clazz.methods) {
                 for (var instruction : method.instructions) {
-                    if (instruction instanceof FieldInsnNode insn) {
-                        var fqn = remapper.reverse.get(insn.owner + "." + insn.name + insn.desc);
+                    if (instruction instanceof FieldInsnNode fieldInsn && newOwners.containsKey(fieldInsn.name)) {
+                        fieldInsn.owner = classesByName.get(newOwners.get(fieldInsn.name)).name;
+                    }
 
-                        if (newOwners.containsKey(fqn)) {
-                            var newOwner = classesByName.get(newOwners.get(fqn));
-                            insn.owner = newOwner.name;
-                        }
-                    } else if (instruction instanceof MethodInsnNode insn) {
-                        var fqn = remapper.reverse.get(insn.name + "." + insn.name + insn.desc);
-
-                        if (newOwners.containsKey(fqn)) {
-                            insn.owner = classesByName.get(newOwners.get(fqn)).name;
-                        }
+                    if (instruction instanceof MethodInsnNode methodInsn && newOwners.containsKey(methodInsn.name)) {
+                        methodInsn.owner = classesByName.get(newOwners.get(methodInsn.name)).name;
                     }
                 }
             }
         }
+    }
+
+    private static String findObfuscatedName(List<AnnotationNode> annotations, String name) {
+        if (annotations == null) {
+            return name;
+        }
+
+        for (var annotation : annotations) {
+            if (annotation.desc.equals("LObfuscatedName;")) {
+                return (String) annotation.values.get(1);
+            }
+        }
+
+        return name;
     }
 }

@@ -19,68 +19,43 @@ public class BytecodeDeobfuscator {
         this.profile = profile;
 
         registerTransformer(new RlMathTransformer());
+        registerTransformer(new SortClassesLegacyTransformer());
 
         // openrs2
-        registerTransformer(new SortClassesLegacyTransformer());
+        registerTransformer(new BitShiftTransformer());
+        registerTransformer(new ExceptionObfuscationTransformer());
         registerTransformer(new ExceptionTracingTransformer());
+        registerTransformer(new FernflowerExceptionTransformer());
         registerTransformer(new MonitorTransformer());
         registerTransformer(new OpaquePredicateTransformer());
-        registerTransformer(new OriginalNameTransformer());
         registerTransformer(new VisibilityTransformer());
-        registerTransformer(new BitShiftTransformer());
-        registerTransformer(new SortMethodsLineOrderTransformer());
-        registerTransformer(new FernflowerExceptionTransformer());
-        registerTransformer(new ExceptionObfuscationTransformer());
 
         // zwyz
+        registerTransformer(new AnnotationRemoverTransformer()); // runelite
+        registerTransformer(new DeleteInvokeDynamicTransformer()); // runelite
         registerTransformer(new AnnotateObfuscatedNamesTransformer());
-        registerTransformer(new AnnotationRemoverTransformer());
-        registerTransformer(new CalledMethodsTransformer());
-        registerTransformer(new DeleteInvokeDynamicTransformer());
+        registerTransformer(new UniqueRenamerTransformer());
+        registerTransformer(new StaticInstanceMethodsTransformer()); // runelite
+        registerTransformer(new CalledMethodsTransformer()); // if runelite, be sure to run a second time!
         registerTransformer(new ErrorHandlersTransformer());
-        registerTransformer(new ExpressionSorterTransformer());
-        registerTransformer(new UnreachableCodeTransformer()); // extracted out of GotoTransformer but goes hand-in-hand
-        registerTransformer(new GotoTransformer());
         registerTransformer(new ParameterChecksTransformer());
-        registerTransformer(new SortFieldsNameTransformer());
+        registerTransformer(new UnreachableCodeTransformer()); // extracted out of GotoTransformer
+        registerTransformer(new GotoTransformer());
+        registerTransformer(new StaticMethodsTransformer());
         registerTransformer(new SortMethodsTransformer());
         registerTransformer(new StaticFieldsTransformer());
-        registerTransformer(new StaticInstanceMethodsTransformer());
-        registerTransformer(new StaticMethodsTransformer());
+        registerTransformer(new SortFieldsNameTransformer());
         registerTransformer(new VariableSplitterTransformer());
+        registerTransformer(new ExpressionSorterTransformer());
     }
 
     private void registerTransformer(Transformer transformer) {
-        //System.out.println("Registered transformer: " + transformer.getName());
         this.allTransformers.put(transformer.getName(), transformer);
         transformer.provide(this.profile);
     }
 
     public void run(List<ClassNode> classes) throws IOException {
         System.out.println("---- Deobfuscating ----");
-
-        TomlArray preTransformers = this.profile.getArray("profile.remap.transformers");
-        boolean enableRemap = Boolean.TRUE.equals(this.profile.getBoolean("profile.remap.enable"));
-
-        if (enableRemap) {
-            if (preTransformers != null) {
-                for (int i = 0; i < preTransformers.size(); i++) {
-                    String name = preTransformers.getString(i);
-
-                    Transformer transformer = this.allTransformers.get(name);
-                    if (transformer != null) {
-                        System.out.println("Applying " + name + " pre-transformer");
-                        transformer.transform(classes);
-                    } else {
-                        System.err.println("Unknown transformer: " + name);
-                    }
-                }
-            }
-
-            Transformer remap = new RemapTransformer();
-            remap.provide(this.profile);
-            remap.transform(classes);
-        }
 
         TomlArray transformers = this.profile.getArray("profile.deob.transformers");
         if (transformers != null) {
@@ -97,28 +72,11 @@ public class BytecodeDeobfuscator {
             }
         }
 
-        // run finalTransform pass (if they need to run something at the very end of all processing)
-
-        if (enableRemap && preTransformers != null) {
-            for (int i = 0; i < preTransformers.size(); i++) {
-                String name = preTransformers.getString(i);
-
-                Transformer transformer = this.allTransformers.get(name);
-                if (transformer != null) {
-                    transformer.finalTransform(classes);
-                }
-            }
-        }
-
-        if (transformers != null) {
-            for (int i = 0; i < transformers.size(); i++) {
-                String name = transformers.getString(i);
-
-                Transformer transformer = this.allTransformers.get(name);
-                if (transformer != null) {
-                    transformer.finalTransform(classes);
-                }
-            }
+        if (Boolean.TRUE.equals(profile.getBoolean("profile.remap.enable"))) {
+            System.out.println("---- Remapping ----");
+            Transformer remap = new RemapTransformer();
+            remap.provide(this.profile);
+            remap.transform(classes);
         }
     }
 }

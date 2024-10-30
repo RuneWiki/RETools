@@ -3,11 +3,16 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
-class ZwyzLegacyLogic {
+public class ZwyzLegacyLogic {
+    // todo: move list to profile
+    public static final List<String> EXTERNAL_LIBRARIES = List.of(
+            "com/jagex/oldscape/pub",
+            "org/bouncycastle/",
+            "org/json/"
+    );
+
     public static Set<String> calledMethods = new LinkedHashSet<>();
     public static Set<String> obfuscatedMethods = new HashSet<>();
     public static Set<String> unobfuscatedMethods = new HashSet<>();
@@ -17,7 +22,7 @@ class ZwyzLegacyLogic {
     static {
         staticsClass.version = Opcodes.V1_6; // todo: RUNELITE ? Opcodes.V1_8 : Opcodes.V1_6;
         staticsClass.access = Opcodes.ACC_PUBLIC;
-        staticsClass.name = "deob/statics";
+        staticsClass.name = "statics";
         staticsClass.superName = "java/lang/Object";
         staticsClass.sourceFile = "statics.java";
     }

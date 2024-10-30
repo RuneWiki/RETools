@@ -3,14 +3,14 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import org.runewiki.deob.AsmUtil;
+import org.runewiki.deob.bytecode.AsmUtil;
 
 import java.util.*;
 
 public class VariableSplitterTransformer extends Transformer {
-    private Map<AbstractInsnNode, InstructionBlock> blocks = new HashMap<>();
-    private Map<AbstractInsnNode, Set<AbstractInsnNode>> varInstructionGroups = new LinkedHashMap<>();
-    private Set<AbstractInsnNode> parameterLoads = new HashSet<>();
+    private Map<AbstractInsnNode, InstructionBlock> blocks;
+    private Map<AbstractInsnNode, Set<AbstractInsnNode>> varInstructionGroups;
+
     private InstructionBlock startBlock;
     private int firstLocalIndex;
 
@@ -22,10 +22,7 @@ public class VariableSplitterTransformer extends Transformer {
 
         blocks = new HashMap<>();
         varInstructionGroups = new LinkedHashMap<>();
-        parameterLoads = new HashSet<>();
-        startBlock = null;
-        firstLocalIndex = -1;
-
+        Set<AbstractInsnNode> parameterLoads = new HashSet<>();
 
         firstLocalIndex = AsmUtil.getFirstLocalIndex(method);
         startBlock = new InstructionBlock(null);

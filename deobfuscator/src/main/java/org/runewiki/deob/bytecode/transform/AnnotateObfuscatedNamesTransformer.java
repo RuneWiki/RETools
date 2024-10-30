@@ -4,7 +4,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.runewiki.asm.transform.Transformer;
-import org.runewiki.deob.AsmUtil;
+import org.runewiki.deob.bytecode.AsmUtil;
 
 import java.util.List;
 
@@ -32,7 +32,9 @@ public class AnnotateObfuscatedNamesTransformer extends Transformer {
 
     @Override
     public boolean transformClass(List<ClassNode> classes, ClassNode clazz) {
-        // todo: skip external libraries
+        if (ZwyzLegacyLogic.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+            return false;
+        }
 
         if (clazz != obfuscatedNameClass && AsmUtil.isClassObfuscated(clazz.name.substring(clazz.name.lastIndexOf('/') + 1))) {
             var classAnnotation = clazz.visitAnnotation("L" + obfuscatedNameClass.name + ";", false);

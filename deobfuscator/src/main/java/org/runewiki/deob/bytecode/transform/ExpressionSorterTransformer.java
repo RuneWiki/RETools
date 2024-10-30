@@ -3,7 +3,7 @@ package org.runewiki.deob.bytecode.transform;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import org.runewiki.deob.AsmUtil;
+import org.runewiki.deob.bytecode.AsmUtil;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -13,10 +13,6 @@ import java.util.Objects;
 public class ExpressionSorterTransformer extends Transformer {
     @Override
     public boolean transformMethod(List<ClassNode> classes, ClassNode clazz, MethodNode method) {
-        if ((method.access & Opcodes.ACC_ABSTRACT) != 0) {
-            return false;
-        }
-
         var newInstructions = new MethodNode();
         var stack = new ArrayDeque<Expression>();
 
@@ -155,7 +151,6 @@ public class ExpressionSorterTransformer extends Transformer {
         if (constant1 instanceof Float i1 && constant2 instanceof Float i2) return i1 > i2;
         if (constant1 instanceof Double i1 && constant2 instanceof Double i2) return i1 > i2;
 
-        // System.out.println("todo: compare " + argument1 + " " + argument2);
         return false;
     }
 
@@ -276,10 +271,6 @@ public class ExpressionSorterTransformer extends Transformer {
         if (opcode == Opcodes.IMUL || opcode == Opcodes.LMUL || opcode == Opcodes.FMUL || opcode == Opcodes.DMUL)
             return true;
 
-        // seems jagex doesn't flip bitwise operations
-//        if (opcode == Opcodes.IAND || opcode == Opcodes.LAND) return true;
-//        if (opcode == Opcodes.IOR || opcode == Opcodes.LOR) return true;
-//        if (opcode == Opcodes.IXOR || opcode == Opcodes.LXOR) return true;
         return false;
     }
 

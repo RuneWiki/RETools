@@ -4,7 +4,7 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.tree.*;
 import org.runewiki.asm.transform.Transformer;
-import org.runewiki.deob.AsmUtil;
+import org.runewiki.deob.bytecode.AsmUtil;
 import org.tomlj.TomlParseResult;
 
 import java.util.Arrays;
@@ -13,15 +13,15 @@ import java.util.List;
 import java.util.Objects;
 
 public class ParameterChecksTransformer extends Transformer {
-    private static boolean RUNELITE = false;
-    private static boolean COMPLEX_PARAMETER_CHECKS = false;
+    private boolean runelite = false;
+    private boolean complex = false;
 
     @Override
     public void provide(TomlParseResult profile) {
         super.provide(profile);
 
-        RUNELITE = Boolean.TRUE.equals(profile.getBoolean("profile.deob.parameter_checks.runelite"));
-        COMPLEX_PARAMETER_CHECKS = Boolean.TRUE.equals(profile.getBoolean("profile.deob.parameter_checks.complex"));
+        runelite = Boolean.TRUE.equals(profile.getBoolean("profile.deob.parameter_checks.runelite"));
+        complex = Boolean.TRUE.equals(profile.getBoolean("profile.deob.parameter_checks.complex"));
     }
 
     @Override
@@ -29,7 +29,7 @@ public class ParameterChecksTransformer extends Transformer {
         // scan for constants
         var exclude = new HashSet<String>();
 
-        if (COMPLEX_PARAMETER_CHECKS) {
+        if (complex) {
             for (var clazz : classes) {
                 for (var method : clazz.methods) {
                     var instruction = method.instructions.getFirst();
@@ -42,7 +42,7 @@ public class ParameterChecksTransformer extends Transformer {
                             if (argumentTypes.length == 0) {
                                 exclude.add(mi.name);
                             } else {
-                                if (AsmUtil.isIntConstant(instruction.getPrevious()) || RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
+                                if (AsmUtil.isIntConstant(instruction.getPrevious()) || runelite && instruction.getPrevious() instanceof VarInsnNode) {
                                     // could remove
                                 } else {
                                     exclude.add(mi.name);
@@ -73,9 +73,7 @@ public class ParameterChecksTransformer extends Transformer {
                 var shouldRemove = allLinkedMethodsObfuscated && !linkedToLibraryMethod && !lastParameterLongOrDouble && !insideIncludedLibrary;
 
                 if (shouldRemove) {
-                    if (exclude.contains(method.name) || !removeParameterCheck(clazz, method)) {
-                        // System.out.println("not checked " + clazz.name + "." + method.name + method.desc);
-                    } else {
+                    if (!exclude.contains(method.name) && removeParameterCheck(clazz, method)) {
                         parameterCheckRemoved.add(method.name);
                     }
                 }
@@ -92,7 +90,7 @@ public class ParameterChecksTransformer extends Transformer {
                         var argumentTypes = type.getArgumentTypes();
                         mi.desc = Type.getMethodType(type.getReturnType(), Arrays.copyOfRange(argumentTypes, 0, argumentTypes.length - 1)).getDescriptor();
 
-                        if (AsmUtil.isIntConstant(instruction.getPrevious()) || RUNELITE && instruction.getPrevious() instanceof VarInsnNode) {
+                        if (AsmUtil.isIntConstant(instruction.getPrevious()) || runelite && instruction.getPrevious() instanceof VarInsnNode) {
                             method.instructions.remove(instruction.getPrevious());
                         } else {
                             throw new AssertionError();
@@ -105,7 +103,7 @@ public class ParameterChecksTransformer extends Transformer {
         }
     }
 
-    private static boolean removeParameterCheck(ClassNode clazz, MethodNode method) {
+    private boolean removeParameterCheck(ClassNode clazz, MethodNode method) {
         var type = Type.getMethodType(method.desc);
         var lastArgumentIndex = type.getArgumentTypes().length - 1;
 
@@ -140,7 +138,7 @@ public class ParameterChecksTransformer extends Transformer {
         }
 
         if (removed && kept) {
-            if (COMPLEX_PARAMETER_CHECKS) {
+            if (complex) {
                 method.instructions = original.instructions;
                 return false; // revert
             } else {
@@ -172,7 +170,7 @@ public class ParameterChecksTransformer extends Transformer {
         return true;
     }
 
-    private static boolean removeParameterCheck(ClassNode clazz, MethodNode method, AbstractInsnNode instruction, int lastArgumentIndex) {
+    private boolean removeParameterCheck(ClassNode clazz, MethodNode method, AbstractInsnNode instruction, int lastArgumentIndex) {
         var first = instruction;
 
         // int load
@@ -192,7 +190,7 @@ public class ParameterChecksTransformer extends Transformer {
 
         var endLabel = ((JumpInsnNode) instruction).label;
 
-        if (!COMPLEX_PARAMETER_CHECKS) {
+        if (!complex) {
             instruction = instruction.getNext();
             if (AsmUtil.isNew(instruction, "java/lang/IllegalStateException")) { // new java/lang/IllegalStateException
                 // dup
@@ -215,7 +213,7 @@ public class ParameterChecksTransformer extends Transformer {
             } else if (instruction.getOpcode() == Opcodes.RETURN) { // return
                 // ok
             } else {
-                if (!RUNELITE) {
+                if (!runelite) {
                     return false;
                 }
             }

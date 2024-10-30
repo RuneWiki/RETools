@@ -16,7 +16,9 @@ public class StaticFieldsTransformer extends Transformer {
         var usedFields = new HashSet<String>();
 
         for (var clazz : classes) {
-            // todo: skip external libraries
+            if (ZwyzLegacyLogic.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
 
             for (var method : clazz.methods) {
                 for (var instruction : method.instructions) {
@@ -28,7 +30,9 @@ public class StaticFieldsTransformer extends Transformer {
         }
 
         for (var clazz : classes) {
-            // todo: skip external libraries
+            if (ZwyzLegacyLogic.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
 
             clazz.fields.removeIf(f -> !usedFields.contains(f.name));
         }
@@ -37,7 +41,9 @@ public class StaticFieldsTransformer extends Transformer {
         var unmovedFields = new HashSet<String>();
 
         for (var clazz : classes) {
-            // todo: skip external libraries
+            if (ZwyzLegacyLogic.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
 
             for (var method : clazz.methods) {
                 if (method.name.equals("<clinit>")) {
@@ -53,9 +59,11 @@ public class StaticFieldsTransformer extends Transformer {
         var movedFields = new HashSet<String>();
 
         for (var clazz : classes) {
-            // todo: skip external libraries
+            if (ZwyzLegacyLogic.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
 
-            if (clazz.name.equals("deob/statics")) {
+            if (clazz.name.equals("statics")) {
                 continue;
             }
 
@@ -69,7 +77,9 @@ public class StaticFieldsTransformer extends Transformer {
         }
 
         for (var clazz : classes) {
-            // todo: skip external libraries
+            if (ZwyzLegacyLogic.EXTERNAL_LIBRARIES.stream().anyMatch(p -> clazz.name.startsWith(p))) {
+                continue;
+            }
 
             for (var method : clazz.methods) {
                 for (var instruction : method.instructions) {

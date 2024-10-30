@@ -15,3 +15,5 @@ bin/
 .DS_Store
 thumbs.db
 desktop.ini
+
+*.java~

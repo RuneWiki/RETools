@@ -7,7 +7,7 @@ import org.objectweb.asm.tree.JumpInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.runewiki.asm.transform.Transformer;
-import org.runewiki.deob.AsmUtil;
+import org.runewiki.deob.bytecode.AsmUtil;
 
 import java.util.*;
 

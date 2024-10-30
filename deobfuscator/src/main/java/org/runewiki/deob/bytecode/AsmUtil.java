@@ -1,4 +1,4 @@
-package org.runewiki.deob;
+package org.runewiki.deob.bytecode;
 
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -267,6 +267,10 @@ public class AsmUtil {
     }
 
     public static boolean isClassObfuscated(String name) {
+        return OBF_PATTERN.matcher(name).matches();
+    }
+
+    public static boolean isClassObfuscatedLegacy(String name) {
         if (name.equals(name.toUpperCase()) && name.length() == 8) {
             // 2005-2006
             return true;
