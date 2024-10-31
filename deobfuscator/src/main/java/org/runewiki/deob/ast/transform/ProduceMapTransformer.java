@@ -50,7 +50,7 @@ public class ProduceMapTransformer extends AstTransformer {
         });
 
         walk(unit, AnnotationDeclaration.class, annotation -> {
-            String originalName = getOriginalName(annotation.getAnnotations());
+            String originalName = getOriginalName(annotation.getAnnotations(), true);
             if (originalName == null) {
                 return;
             }
@@ -68,7 +68,7 @@ public class ProduceMapTransformer extends AstTransformer {
                 return;
             }*/
 
-            String foundClass = getOriginalName(clazz.getAnnotations());
+            String foundClass = getOriginalName(clazz.getAnnotations(), true);
             if (foundClass != null) {
                 String newClass;
                 if (pkgName.get() != null) {
@@ -94,7 +94,7 @@ public class ProduceMapTransformer extends AstTransformer {
                     return;
                 }*/
 
-                String originalName = getOriginalName(field.getAnnotations());
+                String originalName = getOriginalName(field.getAnnotations(), false);
                 if (originalName == null) {
                     return;
                 }
@@ -112,7 +112,7 @@ public class ProduceMapTransformer extends AstTransformer {
                     return;
                 }*/
 
-                String originalName = getOriginalName(method.getAnnotations());
+                String originalName = getOriginalName(method.getAnnotations(), true);
                 if (originalName == null) {
                     return;
                 }
@@ -126,7 +126,7 @@ public class ProduceMapTransformer extends AstTransformer {
         });
     }
 
-    public String getOriginalName(List<AnnotationExpr> annotations) {
+    public String getOriginalName(List<AnnotationExpr> annotations, boolean addDescriptor) {
         if (annotations.isEmpty()) {
             return null;
         }
@@ -149,7 +149,9 @@ public class ProduceMapTransformer extends AstTransformer {
                 String name = ((NormalAnnotationExpr) expr).getPairs().get(1).getValue().toString().replace("\"", "");
                 String descriptor = ((NormalAnnotationExpr) expr).getPairs().get(2).getValue().toString().replace("\"", "");
 
-                originalName = owner + "." + name + descriptor;
+                if (addDescriptor) {
+                    originalName = owner + "." + name + descriptor;
+                }
             }
         }
 
