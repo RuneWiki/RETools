@@ -25,13 +25,13 @@ java {
 }
 
 application {
-    mainClass = "org.runewiki.deob.Deobfuscator"
+    mainClass = "rs.lostcity.deob.Deobfuscator"
 }
 
 jar {
     manifest {
         attributes(
-            'Main-Class': 'org.runewiki.deob.Deobfuscator'
+            'Main-Class': 'rs.lostcity.deob.Deobfuscator'
         )
     }
 
