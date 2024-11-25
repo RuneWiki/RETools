@@ -1,5 +1,3 @@
-rootProject.name = 'RETools'
-
 dependencyResolutionManagement {
     repositories {
         mavenCentral()
@@ -9,7 +7,3 @@ dependencyResolutionManagement {
         maven { url 'https://repo.openrs2.org/repository/openrs2' }
     }
 }
-
-include(
-    "deobfuscator"
-)
