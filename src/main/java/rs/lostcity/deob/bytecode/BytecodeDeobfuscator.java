@@ -5,6 +5,8 @@ import rs.lostcity.asm.transform.Transformer;
 import rs.lostcity.deob.bytecode.transform.*;
 import org.tomlj.TomlArray;
 import org.tomlj.TomlParseResult;
+import rs.lostcity.deob.bytecode.transform.openrs2.*;
+import rs.lostcity.deob.bytecode.transform.zwyz.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,11 +25,30 @@ public class BytecodeDeobfuscator {
 
         // openrs2
         registerTransformer(new BitShiftTransformer());
+        registerTransformer(new BitwiseOpTransformer());
+        registerTransformer(new ClassLiteralTransformer());
+        registerTransformer(new ConstantArgTransformer());
+        registerTransformer(new CopyPropagationTransformer());
+        registerTransformer(new CounterTransformer());
+        registerTransformer(new EmptyClassTransformer());
         registerTransformer(new ExceptionObfuscationTransformer());
         registerTransformer(new ExceptionTracingTransformer());
         registerTransformer(new FernflowerExceptionTransformer());
+        registerTransformer(new FieldOrderTransformer());
+        registerTransformer(new FinalClassTransformer());
+        registerTransformer(new FinalFieldTransformer());
+        registerTransformer(new FinalMethodTransformer());
+        registerTransformer(new InvokeSpecialTransformer());
+        registerTransformer(new MethodOrderTransformer());
         registerTransformer(new MonitorTransformer());
+        registerTransformer(new MultipleAssignmentTransformer());
         registerTransformer(new OpaquePredicateTransformer());
+        registerTransformer(new OverrideTransformer());
+        registerTransformer(new RedundantGotoTransformer());
+        registerTransformer(new ResetTransformer());
+        registerTransformer(new UnusedArgTransformer());
+        registerTransformer(new UnusedLocalTransformer());
+        registerTransformer(new UnusedMethodTransformer());
         registerTransformer(new VisibilityTransformer());
 
         // zwyz

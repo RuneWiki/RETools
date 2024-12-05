@@ -6,6 +6,8 @@ import org.objectweb.asm.commons.Remapper;
 import org.objectweb.asm.tree.*;
 import rs.lostcity.asm.transform.Transformer;
 import org.tomlj.TomlParseResult;
+import rs.lostcity.deob.bytecode.transform.zwyz.SortFieldsNameTransformer;
+import rs.lostcity.deob.bytecode.transform.zwyz.SortMethodsTransformer;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
